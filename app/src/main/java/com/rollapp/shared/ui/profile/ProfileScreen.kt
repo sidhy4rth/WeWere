@@ -50,6 +50,15 @@ import com.rollapp.shared.ui.components.GoldButton
 import com.rollapp.shared.ui.components.Hairline
 import com.rollapp.shared.ui.components.Readout
 import com.rollapp.shared.ui.theme.Gold
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import com.rollapp.shared.ui.theme.Muted
+import com.rollapp.shared.ui.theme.OnGold
+import androidx.compose.foundation.background
 
 @Composable
 fun ProfileScreen(
@@ -148,21 +157,47 @@ fun ProfileScreen(
                     .padding(vertical = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box {
+                val pickPhoto = {
+                    photoPicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
+                // The photo is the profile: a gold camera badge says "this is yours to
+                // change" without a label, and the button below says it out loud.
+                Box(modifier = Modifier.clickable(onClick = pickPhoto)) {
                     UserAvatar(
                         name = state.user?.name.orEmpty(),
                         photoUrl = state.user?.photoUrl,
                         seed = state.user?.uid.orEmpty(),
-                        size = 96.dp,
-                        borderColor = Gold,
-                        modifier = Modifier.clickable {
-                            photoPicker.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        }
+                        size = 112.dp,
+                        borderColor = Gold
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Gold)
+                            .border(3.dp, Ink, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Rounded.PhotoCamera,
+                            contentDescription = "Change profile photo",
+                            tint = OnGold,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                TextButton(onClick = pickPhoto) {
+                    Text(
+                        text = if (state.user?.photoUrl.isNullOrBlank()) "Add a photo" else "Change photo",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gold
                     )
                 }
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(4.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { nameDraft = state.user?.name.orEmpty(); editingName = true }
@@ -251,6 +286,16 @@ fun ProfileScreen(
             ) {
                 Text("Delete account", color = MaterialTheme.colorScheme.error)
             }
+
+            Spacer(Modifier.height(28.dp))
+
+            Text(
+                text = "Made with ❤️ by sidhY4rth",
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(Modifier.height(40.dp))
         }
