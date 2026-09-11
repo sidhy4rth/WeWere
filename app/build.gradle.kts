@@ -55,6 +55,20 @@ android {
         buildConfigField("String", "SUPABASE_BUCKET", "\"$supabaseBucket\"")
     }
 
+    // Release signing comes from local.properties (git-ignored). Without it the release
+    // build still assembles, unsigned, which is what CI and a fresh clone get.
+    val releaseStore = localProps.getProperty("RELEASE_STORE_FILE")?.let { rootProject.file(it) }
+    if (releaseStore != null && releaseStore.exists()) {
+        signingConfigs {
+            create("release") {
+                storeFile = releaseStore
+                storePassword = localProps.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = localProps.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = localProps.getProperty("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -72,6 +86,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

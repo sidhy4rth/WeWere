@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WeWere</title>
+<meta name="description" content="WeWere — one shared camera roll for the people you were with. Private rolls for your friends, on Android.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  :root {
+    --ink: #0B0A08;
+    --surface: #141210;
+    --raised: #1C1916;
+    --gold: #D4AF37;
+    --gold-light: #E5C158;
+    --gold-deep: #A8842A;
+    --on-gold: #14110A;
+    --ivory: #F3EDE0;
+    --ivory-muted: #B9B0A0;
+    --muted: #8E8578;
+    --hair: rgba(212, 175, 55, 0.35);
+    --serif: 'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+    --sans: 'Manrope', 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--ivory);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding-inline: 20px;
+    padding-block: 0;
+  }
+  a { color: var(--gold); text-decoration: none; }
+  a:hover { color: var(--gold-light); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 999px; }
+
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .readout {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .hair { height: 1px; background: linear-gradient(90deg, transparent, var(--hair), transparent); }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+  p { margin: 0; max-width: 60ch; }
+
+  /* ---- Nav ---- */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding-block: 22px;
+  }
+  .wordmark { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 30px; color: var(--gold); letter-spacing: -0.02em; }
+  .nav-links { display: flex; gap: 22px; flex-wrap: wrap; }
+  .nav-links a { color: var(--ivory-muted); font-size: 14px; font-weight: 600; }
+  .nav-links a:hover { color: var(--ivory); }
+
+  /* ---- Buttons ---- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    height: 56px; padding: 0 28px; border-radius: 999px;
+    font-weight: 700; font-size: 16px; white-space: nowrap;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .btn-gold {
+    color: var(--on-gold);
+    background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 55%, var(--gold-deep) 100%);
+    box-shadow: 0 12px 32px rgba(212, 175, 55, 0.22);
+  }
+  .btn-gold:hover { color: var(--on-gold); transform: translateY(-1px); box-shadow: 0 16px 40px rgba(212, 175, 55, 0.32); }
+  .btn-hair { color: var(--ivory); border: 1px solid var(--hair); }
+  .btn-hair:hover { color: var(--ivory); border-color: var(--gold); }
+  .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* ---- Hero ---- */
+  .hero {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center;
+    padding-block: 56px 72px;
+  }
+  .hero h1 { font-size: clamp(48px, 7vw, 84px); line-height: 0.98; font-weight: 500; }
+  .hero h1 em { font-style: italic; color: var(--gold); }
+  .hero .lede { font-size: 19px; color: var(--ivory-muted); margin-top: 22px; }
+  .hero .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; align-items: center; }
+  .hero .fine { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .hero .fine code { font-family: var(--mono); font-size: 12px; color: var(--ivory-muted); }
+
+  /* ---- Phone ---- */
+  .phone-wrap { display: flex; justify-content: center; }
+  .phone {
+    width: 320px; max-width: 100%; aspect-ratio: 390 / 800;
+    border-radius: 40px; padding: 10px;
+    background: linear-gradient(160deg, #2a2620, #0d0c0a);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%; border-radius: 32px; overflow: hidden;
+    background: var(--ink); padding: 34px 18px 0; display: flex; flex-direction: column; gap: 12px;
+  }
+  .screen .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .screen .title { font-family: var(--serif); font-size: 30px; line-height: 1; font-weight: 600; }
+  .screen .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-light), var(--gold-deep)); color: var(--on-gold); font-weight: 700; font-size: 12px; display: grid; place-items: center; }
+  .roll {
+    position: relative; height: 150px; border-radius: 14px; overflow: hidden; background: var(--surface);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.5);
+  }
+  .roll .cover { position: absolute; inset: 0; }
+  .roll .sprocket { position: absolute; top: 0; bottom: 0; width: 10px; background-image: radial-gradient(rgba(243,237,224,0.3) 0 1.8px, transparent 2.2px); background-size: 10px 12px; opacity: 0.35; }
+  .roll .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,10,8,0.05), rgba(11,10,8,0.2) 45%, rgba(11,10,8,0.92)); }
+  .roll .corner { position: absolute; width: 14px; height: 14px; border: 0 solid var(--gold); top: 10px; }
+  .roll .corner.l { left: 16px; border-left-width: 1.5px; border-top-width: 1.5px; }
+  .roll .corner.r { right: 16px; border-right-width: 1.5px; border-top-width: 1.5px; }
+  .roll .meta { position: absolute; left: 18px; right: 18px; bottom: 12px; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .roll .name { font-family: var(--serif); font-size: 22px; line-height: 1; font-weight: 600; }
+  .roll .count { font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ivory-muted); margin-top: 5px; }
+  .roll .dot { position: absolute; left: 18px; top: 12px; display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .roll .dot i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .roll .faces { display: flex; }
+  .roll .faces span { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--ink); margin-left: -6px; }
+  .c1 { background: radial-gradient(100% 100% at 50% 100%, #f8e2a8 0%, #d59a3f 30%, #5a2d0c 70%, #1a0c05 100%); }
+  .c2 { background: radial-gradient(110% 100% at 80% 20%, #9ac6e8 0%, #2f5f8a 40%, #0d1b2a 100%); }
+  .c3 { background: radial-gradient(120% 80% at 30% 80%, #6f8f6a 0%, #2b3f2a 45%, #0b120b 100%); }
+  .shimmer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .shimmer::after { content: ""; position: absolute; top: -20%; bottom: -20%; width: 34%; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,240,200,0.2) 50%, rgba(255,255,255,0) 100%); transform: translateX(-140%) skewX(-18deg); animation: sweep 2.8s 1.4s ease-in-out 1 forwards; }
+  .screen .cta { margin-top: auto; margin-bottom: 18px; height: 40px; border-radius: 999px; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold) 55%, var(--gold-deep)); box-shadow: 0 10px 24px rgba(212,175,55,0.25); }
+
+  /* ---- Sections ---- */
+  section { padding-block: 64px; }
+  .section-head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .section-head h2 { font-size: clamp(32px, 4.4vw, 46px); line-height: 1.05; }
+  .section-head p { color: var(--ivory-muted); font-size: 17px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+  .step { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--hair); }
+  .step h3 { font-size: 28px; font-weight: 500; font-style: italic; }
+  .step p { color: var(--ivory-muted); font-size: 15px; }
+
+  .spec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+  .spec dl { margin: 0; }
+  .spec .row { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding-block: 16px; border-bottom: 1px solid rgba(243,237,224,0.08); }
+  .spec dt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); padding-top: 3px; }
+  .spec dd { margin: 0; color: var(--ivory-muted); font-size: 15px; }
+  .spec dd strong { color: var(--ivory); font-weight: 600; }
+
+  .privacy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .privacy p + p { margin-top: 14px; }
+  .privacy .honest { padding: 22px 24px; border: 1px solid var(--hair); border-radius: 18px; background: var(--surface); }
+  .privacy .honest .readout { display: block; margin-bottom: 10px; }
+
+  .install { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .install ol { margin: 0; padding-left: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 14px; }
+  .install li { display: grid; grid-template-columns: 32px 1fr; gap: 12px; color: var(--ivory-muted); font-size: 15px; }
+  .install li::before { counter-increment: s; content: counter(s, decimal-leading-zero); font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--gold); padding-top: 4px; }
+  .install .card { padding: 26px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); display: flex; flex-direction: column; gap: 18px; }
+  .install .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+  .install .facts div { display: flex; flex-direction: column; gap: 4px; }
+  .install .facts b { font-weight: 600; color: var(--ivory); font-variant-numeric: tabular-nums; }
+  .install .facts .readout { color: var(--muted); }
+  .checksum { font-family: var(--mono); font-size: 11px; color: var(--muted); word-break: break-all; line-height: 1.5; }
+
+  footer { padding-block: 40px 56px; display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; color: var(--muted); font-size: 14px; }
+  footer .wordmark { font-size: 26px; }
+
+  /* ---- Motion ---- */
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes sweep { to { transform: translateX(240%) skewX(-18deg); } }
+  .rise { animation: rise 760ms cubic-bezier(.2,.8,.2,1) both; }
+  .d1 { animation-delay: 80ms; } .d2 { animation-delay: 200ms; } .d3 { animation-delay: 320ms; } .d4 { animation-delay: 440ms; } .d5 { animation-delay: 560ms; } .d6 { animation-delay: 680ms; }
+  @media (prefers-reduced-motion: reduce) {
+    .rise { animation: none; }
+    .shimmer::after { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-block: 36px 56px; }
+    .steps, .spec, .privacy, .install { grid-template-columns: 1fr; }
+    .spec .row { grid-template-columns: 120px 1fr; }
+    section { padding-block: 48px; }
+  }
+  @media (max-width: 480px) {
+    .btn { width: 100%; }
+    .spec .row { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <nav class="nav">
+    <span class="wordmark">WeWere</span>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#inside">What's inside</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+    </div>
+  </nav>
+  <div class="hair"></div>
+
+  <header class="hero">
+    <div>
+      <div class="readout rise">Android · Free · No ads, ever</div>
+      <h1 class="rise d1" style="margin-top: 16px;">One shared camera roll for the people you <em>were with.</em></h1>
+      <p class="lede rise d2">Start a roll for the trip, the wedding, the flat. Everyone in it shoots straight into the same place — and the week afterwards, nobody has to chase eight people for the good photos.</p>
+      <div class="actions rise d3">
+        <a class="btn btn-gold" href="https://ggdsxygrtmosayegongb.supabase.co/storage/v1/object/public/releases/WeWere.apk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+          Download for Android
+        </a>
+        <a class="btn btn-hair" href="#how">See how it works</a>
+      </div>
+      <p class="fine rise d4">Version 1.0 · 26 MB · Android 7.0 and up · installs outside the Play Store</p>
+    </div>
+
+    <div class="phone-wrap rise d2">
+      <div class="phone" aria-hidden="true">
+        <div class="screen">
+          <div class="head">
+            <div>
+              <div class="readout" style="font-size: 8px;">Saturday · 2 rolls</div>
+              <div class="title">Your rolls</div>
+            </div>
+            <div class="avatar">R</div>
+          </div>
+          <div class="hair"></div>
+          <div class="roll rise d3">
+            <div class="cover c1"></div>
+            <div class="sprocket" style="left: 0;"></div><div class="sprocket" style="right: 0;"></div>
+            <div class="shade"></div>
+            <div class="shimmer"></div>
+            <div class="corner l"></div><div class="corner r"></div>
+            <div class="dot"><i></i>14 new</div>
+            <div class="meta">
+              <div><div class="name">Goa, finally</div><div class="count">128 photos · 6 friends</div></div>
+              <div class="faces"><span style="background:#E8B4C9"></span><span style="background:#9AC6E8"></span><span style="background:#F2C27B"></span></div>
+            </div>
+          </div>
+          <div class="roll rise d4">
+            <div class="cover c2"></div>
+            <div class="sprocket" style="left: 0;"></div><div class="sprocket" style="right: 0;"></div>
+            <div class="shade"></div>
+            <div class="corner l"></div><div class="corner r"></div>
+            <div class="meta">
+              <div><div class="name">Flat 4B</div><div class="count">61 photos · 3 friends</div></div>
+              <div class="faces"><span style="background:#6F8F6A"></span><span style="background:#E8B4C9"></span></div>
+            </div>
+          </div>
+          <div class="cta rise d5">+ New roll</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="hair"></div>
+
+  <section id="how">
+    <div class="section-head">
+      <span class="readout">How it works</span>
+      <h2>Three things, in this order.</h2>
+      <p>No feed, no followers, no algorithm. A roll is a private group and the photos its people took.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="readout">Start</span>
+        <h3>Open a roll</h3>
+        <p>Name it, give it a cover if you like. That's the whole setup — the first photo becomes the cover otherwise.</p>
+      </div>
+      <div class="step">
+        <span class="readout">Invite</span>
+        <h3>Hold up the code</h3>
+        <p>Every roll has a six-character invite code and a QR. Friends scan it or type it, and they're in. No phone numbers, no contacts access.</p>
+      </div>
+      <div class="step">
+        <span class="readout">Shoot</span>
+        <h3>Everyone shoots into it</h3>
+        <p>Take photos straight from the app or add from your gallery. Everyone else sees them within seconds — even if you lose signal, the upload waits and finishes later.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="hair"></div>
+
+  <section id="inside">
+    <div class="section-head">
+      <span class="readout">What's inside</span>
+      <h2>Small on purpose.</h2>
+      <p>Everything a group of friends needs to keep the photos from one week together, and nothing they don't.</p>
+    </div>
+    <div class="spec">
+      <dl>
+        <div class="row"><dt>Camera</dt><dd><strong>Shoot in, don't upload later.</strong> Tap-to-focus, pinch zoom, flash, a self-timer and a rule-of-thirds grid.</dd></div>
+        <div class="row"><dt>Timeline</dt><dd><strong>Grouped by day.</strong> Each day opens on its most-starred shot, then the rest.</dd></div>
+        <div class="row"><dt>Stars</dt><dd><strong>Mark the keepers.</strong> Filter any roll down to what people starred, or to one person's photos.</dd></div>
+        <div class="row"><dt>Reactions</dt><dd>Five of them. No comment threads, no view counts.</dd></div>
+      </dl>
+      <dl>
+        <div class="row"><dt>Save &amp; share</dt><dd><strong>Full resolution, yours.</strong> Save any photo — or a whole selection — to your gallery, or share it anywhere.</dd></div>
+        <div class="row"><dt>Slideshow</dt><dd>Prop the phone up. It keeps the screen awake and stops at the end.</dd></div>
+        <div class="row"><dt>Offline</dt><dd><strong>Uploads queue.</strong> Photos taken in a dead zone go up the moment you're back on a network.</dd></div>
+        <div class="row"><dt>Sign-in</dt><dd>Google, email, or just look around as a guest and save your account later.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="hair"></div>
+
+  <section id="privacy">
+    <div class="section-head">
+      <span class="readout">Privacy</span>
+      <h2>Private means the people in the roll.</h2>
+    </div>
+    <div class="privacy">
+      <div>
+        <p>A roll is visible only to its members, and a member is only someone who was handed the invite code. There's no discovery, no public profiles, and nothing you post goes anywhere except to the people you were with.</p>
+        <p>Every photo is re-encoded on your phone before it leaves. That strips the metadata — GPS coordinates, device model, the original timestamp — so a photo someone saves and forwards carries nothing about where you were standing. The time it was taken is kept separately, inside the roll, where it belongs.</p>
+        <p>The app never asks to read your photo library. Adding from your gallery uses the system picker, so it only ever sees the photos you choose.</p>
+      </div>
+      <div class="honest">
+        <span class="readout">The honest caveat</span>
+        <p>Photo links inside a roll are long-lived signed URLs. Anyone holding the exact link can open that one image without signing in — the same trade every photo-sharing app makes so images load fast and share cleanly. The links live only inside your roll; they don't leak on their own.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="hair"></div>
+
+  <section id="install">
+    <div class="section-head">
+      <span class="readout">Install</span>
+      <h2>Get it on your phone.</h2>
+      <p>WeWere is shared directly rather than through the Play Store, so Android will ask you to allow the install. Here's what to expect.</p>
+    </div>
+    <div class="install">
+      <div class="card">
+        <a class="btn btn-gold" href="https://ggdsxygrtmosayegongb.supabase.co/storage/v1/object/public/releases/WeWere.apk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+          Download WeWere.apk
+        </a>
+        <div class="facts">
+          <div><span class="readout">Version</span><b>1.0</b></div>
+          <div><span class="readout">Size</span><b>26 MB</b></div>
+          <div><span class="readout">Requires</span><b>Android 7.0+</b></div>
+          <div><span class="readout">Built for</span><b>Android 15</b></div>
+        </div>
+        <div>
+          <span class="readout" style="color: var(--muted);">SHA-256</span>
+          <div class="checksum">abe739cfbd7201244a4d86944a2042c72374cb6cfba433706114ca64cf4bf47b</div>
+        </div>
+      </div>
+      <ol>
+        <li>Tap <strong>Download WeWere.apk</strong>. Your browser may warn that this type of file can harm your device — that's the standard notice for any app installed outside the Play Store. Keep it.</li>
+        <li>Open the downloaded file. If Android says your browser isn't allowed to install apps, tap <strong>Settings</strong> and turn on <strong>Allow from this source</strong>, then go back.</li>
+        <li>Tap <strong>Install</strong>. Google Play Protect may offer to scan it first — that's fine.</li>
+        <li>Open WeWere, sign in with Google or email, and start a roll. Send the code to whoever you were with.</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="hair"></div>
+
+  <footer>
+    <span class="wordmark">WeWere</span>
+    <p>Made with ❤️ by sidhY4rth</p>
+  </footer>
+</div>
+
+</body>
+</html>

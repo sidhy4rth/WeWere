@@ -15,3 +15,11 @@ SUPABASE_URL=https://xxxxxxxxxxxxxxxxxxxx.supabase.co
 SUPABASE_ANON_KEY=
 # Bucket name created by supabase/storage-policies.sql. Only change if you renamed it there.
 SUPABASE_BUCKET=roll
+
+# Release signing (optional; the debug build needs none of this).
+#   keytool -genkeypair -keystore keystore/wewere-release.jks -alias wewere -keyalg RSA -keysize 2048 -validity 10000
+# keystore/ is git-ignored. Back the file and passwords up — they cannot be recovered.
+RELEASE_STORE_FILE=keystore/wewere-release.jks
+RELEASE_STORE_PASSWORD=
+RELEASE_KEY_ALIAS=wewere
+RELEASE_KEY_PASSWORD=
