@@ -26,6 +26,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Pause
@@ -55,7 +56,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.border
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import com.rollapp.shared.ui.components.Readout
+import com.rollapp.shared.ui.components.Settle
+import com.rollapp.shared.ui.theme.Gold
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.theme.Ivory
+import com.rollapp.shared.ui.theme.IvoryMuted
+import com.rollapp.shared.ui.theme.Muted
+import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -285,7 +299,7 @@ fun CarouselScreen(
                         // The cached grid thumbnail fills the frame instantly while the
                         // full-resolution image decodes over it.
                         .placeholderMemoryCacheKey(photo.thumbnailUrl)
-                        .crossfade(200)
+                        .crossfade(400)
                         .build()
                 )
 
@@ -322,16 +336,12 @@ fun CarouselScreen(
                     photo = photo,
                     canDelete = viewModel.canDelete(photo),
                     canEditCaption = photo.uploadedBy == state.myUid,
-                    isFavorite = photo.isFavoritedBy(state.myUid),
                     isSlideshowRunning = slideshowRunning,
-                    onToggleFavorite = { viewModel.toggleFavorite(photo) },
                     onToggleSlideshow = {
                         slideshowRunning = !slideshowRunning
                         if (slideshowRunning) controlsVisible = false
                     },
                     onClose = onClose,
-                    onDownload = { requestDownload(photo) },
-                    onShare = { viewModel.share(photo) },
                     onDelete = { viewModel.deletePhoto(photo.id) },
                     onEditCaption = { editingCaptionFor = photo },
                     onReport = { viewModel.report(photo.id, "inappropriate") }
@@ -348,8 +358,16 @@ fun CarouselScreen(
             currentPhoto?.let { photo ->
                 BottomControls(
                     photo = photo,
+                    position = pagerState.currentPage,
+                    total = state.photos.size,
                     myReaction = myReaction,
-                    onReact = { viewModel.toggleReaction(photo.id, it) }
+                    isFavorite = photo.isFavoritedBy(state.myUid),
+                    canDelete = viewModel.canDelete(photo),
+                    onReact = { viewModel.toggleReaction(photo.id, it) },
+                    onToggleFavorite = { viewModel.toggleFavorite(photo) },
+                    onShare = { viewModel.share(photo) },
+                    onDownload = { requestDownload(photo) },
+                    onDelete = { viewModel.deletePhoto(photo.id) }
                 )
             }
         }
@@ -369,13 +387,9 @@ private fun TopControls(
     photo: Photo,
     canDelete: Boolean,
     canEditCaption: Boolean,
-    isFavorite: Boolean,
     isSlideshowRunning: Boolean,
-    onToggleFavorite: () -> Unit,
     onToggleSlideshow: () -> Unit,
     onClose: () -> Unit,
-    onDownload: () -> Unit,
-    onShare: () -> Unit,
     onDelete: () -> Unit,
     onEditCaption: () -> Unit,
     onReport: () -> Unit
@@ -387,38 +401,42 @@ private fun TopControls(
             .fillMaxWidth()
             .background(Brush.verticalGradient(listOf(PhotoScrimTop, Color.Transparent)))
             .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 4.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onClose) {
-            Icon(Icons.Rounded.ArrowBack, contentDescription = "Close", tint = Color.White)
+            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Close", tint = Ivory, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = onToggleFavorite) {
-            Icon(
-                imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                contentDescription = if (isFavorite) "Remove star" else "Star this photo",
-                tint = if (isFavorite) Color(0xFFFFC94D) else Color.White
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            UserAvatar(
+                name = photo.uploaderName,
+                photoUrl = photo.uploaderPhotoUrl,
+                seed = photo.uploadedBy,
+                size = 32.dp,
+                borderColor = Gold
             )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = photo.uploaderName,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Ivory,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Readout(text = TimeFormat.relative(photo.capturedAt ?: photo.createdAt), color = IvoryMuted)
+            }
         }
-        IconButton(onClick = onToggleSlideshow) {
-            Icon(
-                imageVector = if (isSlideshowRunning) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                contentDescription = if (isSlideshowRunning) "Pause slideshow" else "Play slideshow",
-                tint = Color.White
-            )
-        }
-        IconButton(onClick = onDownload) {
-            Icon(Icons.Rounded.Download, contentDescription = "Save to device", tint = Color.White)
-        }
-        IconButton(onClick = onShare) {
-            Icon(Icons.Rounded.Share, contentDescription = "Share", tint = Color.White)
-        }
+        Spacer(Modifier.weight(1f))
         Box {
             IconButton(onClick = { menuOpen = true }) {
-                Icon(Icons.Rounded.MoreVert, contentDescription = "More", tint = Color.White)
+                Icon(Icons.Rounded.MoreVert, contentDescription = "More", tint = Ivory)
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(if (isSlideshowRunning) "Pause slideshow" else "Play slideshow") },
+                    onClick = { menuOpen = false; onToggleSlideshow() }
+                )
                 if (canEditCaption) {
                     DropdownMenuItem(
                         text = { Text(if (photo.caption.isNullOrBlank()) "Add a caption" else "Edit caption") },
@@ -441,56 +459,53 @@ private fun TopControls(
 }
 
 /**
- * Attribution and reactions only. The brief was explicit that this should not drift
- * into a social feed, so there is no comment thread, no view count and no share-back.
+ * Caption, who starred it, reactions, then the four verbs. The brief was explicit
+ * that this should not drift into a social feed, so there is no comment thread, no
+ * view count and no share-back.
  */
 @Composable
 private fun BottomControls(
     photo: Photo,
+    position: Int,
+    total: Int,
     myReaction: Reaction?,
-    onReact: (Reaction) -> Unit
+    isFavorite: Boolean,
+    canDelete: Boolean,
+    onReact: (Reaction) -> Unit,
+    onToggleFavorite: () -> Unit,
+    onShare: () -> Unit,
+    onDownload: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Brush.verticalGradient(listOf(Color.Transparent, PhotoScrimBottom)))
+            .padding(top = 40.dp)
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(horizontal = 24.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (!photo.caption.isNullOrBlank()) {
             Text(
                 text = photo.caption,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Ivory,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(10.dp))
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            UserAvatar(
-                name = photo.uploaderName,
-                photoUrl = photo.uploaderPhotoUrl,
-                seed = photo.uploadedBy,
-                size = 32.dp
-            )
-            Spacer(Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = photo.uploaderName,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color.White
-                )
-                Text(
-                    text = TimeFormat.relative(photo.capturedAt ?: photo.createdAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.75f)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (photo.favoritedBy.isNotEmpty()) {
+                Readout(
+                    text = "Starred by ${photo.favoritedBy.size}",
+                    color = Gold
                 )
             }
+            Spacer(Modifier.weight(1f))
+            Readout(text = "${position + 1} / $total", color = Muted)
         }
-
-        Spacer(Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Reaction.entries.forEach { reaction ->
@@ -500,9 +515,10 @@ private fun BottomControls(
                 Row(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(
-                            if (selected) Color.White.copy(alpha = 0.28f)
-                            else Color.White.copy(alpha = 0.12f)
+                        .background(if (selected) Gold.copy(alpha = 0.22f) else Ink.copy(alpha = 0.55f))
+                        .then(
+                            if (selected) Modifier.border(1.dp, Gold, CircleShape)
+                            else Modifier.border(1.dp, Ivory.copy(alpha = 0.15f), CircleShape)
                         )
                         .clickable { onReact(reaction) }
                         .padding(horizontal = 11.dp, vertical = 7.dp),
@@ -511,15 +527,104 @@ private fun BottomControls(
                     Text(text = reaction.emoji, style = MaterialTheme.typography.bodyMedium)
                     if (count > 0) {
                         Spacer(Modifier.width(5.dp))
-                        Text(
-                            text = "$count",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White
-                        )
+                        Readout(text = "$count", color = if (selected) Gold else Ivory)
                     }
                 }
             }
         }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        ) {
+            StarAction(isFavorite = isFavorite, onClick = onToggleFavorite)
+            ViewerAction(icon = Icons.Rounded.Share, label = "Share", onClick = onShare)
+            ViewerAction(icon = Icons.Rounded.Download, label = "Save", onClick = onDownload)
+            if (canDelete) {
+                ViewerAction(icon = Icons.Rounded.Delete, label = "Delete", onClick = onDelete)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ViewerAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    tint: Color = Ivory,
+    ring: Color = Ivory.copy(alpha = 0.2f),
+    fill: Color = Color.Transparent
+) {
+    Column(
+        modifier = Modifier.width(64.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(fill)
+                .border(1.dp, ring, CircleShape)
+                .clickable(onClick = onClick, onClickLabel = label),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(20.dp))
+        }
+        Readout(text = label, color = if (tint == Gold) Gold else IvoryMuted)
+    }
+}
+
+/** The star pops and throws a ring when it lights up; unstarring is quiet. */
+@Composable
+private fun StarAction(isFavorite: Boolean, onClick: () -> Unit) {
+    val scale = remember { Animatable(1f) }
+    val burst = remember { Animatable(0f) }
+    var wasFavorite by remember { mutableStateOf(isFavorite) }
+    LaunchedEffect(isFavorite) {
+        if (isFavorite && !wasFavorite) {
+            launch { burst.snapTo(0f); burst.animateTo(1f, tween(700, easing = Settle)) }
+            scale.snapTo(0.6f)
+            scale.animateTo(1.25f, tween(220, easing = Settle))
+            scale.animateTo(1f, tween(260, easing = Settle))
+        }
+        wasFavorite = isFavorite
+    }
+    Column(
+        modifier = Modifier.width(64.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .drawBehind {
+                    val b = burst.value
+                    if (b > 0f && b < 1f) {
+                        drawCircle(
+                            color = Gold.copy(alpha = 0.9f * (1f - b)),
+                            radius = (size.minDimension / 2f) * (0.4f + 1.8f * b),
+                            style = Stroke(width = 1.5.dp.toPx())
+                        )
+                    }
+                }
+                .clip(CircleShape)
+                .background(if (isFavorite) Gold.copy(alpha = 0.14f) else Color.Transparent)
+                .border(1.dp, if (isFavorite) Gold else Ivory.copy(alpha = 0.2f), CircleShape)
+                .clickable(onClick = onClick, onClickLabel = if (isFavorite) "Remove star" else "Star this photo"),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                contentDescription = null,
+                tint = if (isFavorite) Gold else Ivory,
+                modifier = Modifier
+                    .size(22.dp)
+                    .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+            )
+        }
+        Readout(text = if (isFavorite) "Starred" else "Star", color = if (isFavorite) Gold else IvoryMuted)
     }
 }
 

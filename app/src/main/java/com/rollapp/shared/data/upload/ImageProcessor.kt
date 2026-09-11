@@ -119,9 +119,9 @@ class ImageProcessor @Inject constructor(
      */
     private fun decodeScaled(uri: Uri, maxEdge: Int): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, bounds)
-        } ?: return null
+        // A bounds-only decode always returns null; only the stream itself is checked.
+        val probe = context.contentResolver.openInputStream(uri) ?: return null
+        probe.use { BitmapFactory.decodeStream(it, null, bounds) }
 
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 

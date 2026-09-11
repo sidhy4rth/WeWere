@@ -16,6 +16,12 @@ import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.foundation.layout.Column
+import com.rollapp.shared.ui.components.Hairline
+import com.rollapp.shared.ui.theme.Gold
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.theme.Muted
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -100,7 +106,9 @@ fun RollNavHost(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                Column {
+                    Hairline()
+                    NavigationBar(containerColor = Ink, tonalElevation = 0.dp) {
                     tabs.forEach { tab ->
                         val selected = backStackEntry?.destination?.hierarchy?.any {
                             it.route == tab.route
@@ -119,8 +127,16 @@ fun RollNavHost(
                                 }
                             },
                             icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) }
+                            label = { Text(tab.label.uppercase()) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Gold,
+                                selectedTextColor = Gold,
+                                unselectedIconColor = Muted,
+                                unselectedTextColor = Muted,
+                                indicatorColor = Gold.copy(alpha = 0.12f)
+                            )
                         )
+                    }
                     }
                 }
             }

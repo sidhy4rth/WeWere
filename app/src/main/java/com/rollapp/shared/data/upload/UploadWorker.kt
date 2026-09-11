@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -236,8 +237,9 @@ class UploadWorker @AssistedInject constructor(
      * as an opaque failure, and retrying the first one forever burns the battery of
      * someone who has already been removed from the group.
      */
-    private fun classify(t: Throwable): UploadOutcome =
-        when (val error = FirebaseErrorMapper.map(t)) {
+    private fun classify(t: Throwable): UploadOutcome {
+        Log.w(TAG, "Upload attempt failed", t)
+        return when (val error = FirebaseErrorMapper.map(t)) {
             AppError.PermissionDenied, AppError.NotAuthenticated ->
                 UploadOutcome.Permanent("You're no longer a member of this group")
 
@@ -256,6 +258,7 @@ class UploadWorker @AssistedInject constructor(
                     UploadOutcome.Retryable(error.message ?: "Upload failed")
             }
         }
+    }
 
     /**
      * A foreground notification is what buys the upload time to finish when the user
@@ -274,7 +277,7 @@ class UploadWorker @AssistedInject constructor(
 
         val text = if (total > 1) "Uploading photo $current of $total" else "Uploading photo"
         val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setContentTitle("Roll")
+            .setContentTitle("WeWere")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setOngoing(true)
@@ -311,6 +314,7 @@ class UploadWorker @AssistedInject constructor(
     companion object {
         const val WORK_NAME = "roll-upload-queue"
         private const val NOTIFICATION_ID = 4201
+        private const val TAG = "UploadWorker"
         private const val BATCH_SIZE = 8
 
         /** The thumbnail is a small fraction of the bytes; weight the bar accordingly. */

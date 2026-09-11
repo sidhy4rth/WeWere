@@ -71,8 +71,8 @@ fun UserAvatar(
         } else {
             Text(
                 text = initials,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF14110A),
+                fontWeight = FontWeight.Bold,
                 fontSize = (size.value * 0.36f).sp
             )
         }
@@ -107,10 +107,11 @@ fun AvatarStack(
     }
 }
 
+/** Muted pastels: they have to sit next to gold without competing with it. */
 private val AvatarColors = listOf(
-    Color(0xFF5B4DF0), Color(0xFFE0556B), Color(0xFF1B9E77),
-    Color(0xFFD95F02), Color(0xFF7570B3), Color(0xFF0C7BB3),
-    Color(0xFFB8860B), Color(0xFF9A3B8C)
+    Color(0xFFF2C27B), Color(0xFFE8B4C9), Color(0xFF9AC6E8),
+    Color(0xFF6F8F6A), Color(0xFFCFD7E2), Color(0xFFE8A87C),
+    Color(0xFFB8A6D9), Color(0xFF8FBFB4)
 )
 
 internal fun avatarColorFor(seed: String): Color =

@@ -16,6 +16,22 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.alpha
+import com.rollapp.shared.ui.components.GoldButton
+import com.rollapp.shared.ui.components.Hairline
+import com.rollapp.shared.ui.components.Readout
+import com.rollapp.shared.ui.components.Settle
+import com.rollapp.shared.ui.components.Shutter
+import com.rollapp.shared.ui.theme.Gold
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.theme.Ivory
+import com.rollapp.shared.ui.theme.Muted
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +57,6 @@ import androidx.compose.material.icons.rounded.TimerOff
 import androidx.compose.material.icons.rounded.FlashOff
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.PhotoLibrary
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,10 +81,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -142,12 +153,14 @@ private fun CameraPermissionGate(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Roll needs your camera",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
+                text = "WeWere needs your camera",
+                style = MaterialTheme.typography.headlineMedium,
+                color = Ivory,
                 textAlign = TextAlign.Center
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
+            Hairline(Modifier.width(120.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = if (shouldExplain) {
                     "Without it, you can still upload from your gallery — but taking a " +
@@ -157,13 +170,11 @@ private fun CameraPermissionGate(
                         "until you press the shutter."
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.75f),
+                color = Muted,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(28.dp))
-            Button(onClick = onRequest, shape = MaterialTheme.shapes.medium) {
-                Text("Allow camera")
-            }
+            GoldButton(text = "Allow camera", onClick = onRequest)
         }
     }
 }
@@ -310,10 +321,12 @@ private fun CameraContent(
             }
         }
 
+        ViewfinderBrackets(modifier = Modifier.fillMaxSize())
+
         focusPoint?.let { point ->
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawCircle(
-                    color = Color.White,
+                    color = Gold,
                     radius = 38.dp.toPx(),
                     center = point,
                     style = Stroke(width = 1.5.dp.toPx())
@@ -322,15 +335,14 @@ private fun CameraContent(
         }
 
         if (zoomRatio > 1.05f) {
-            Text(
-                text = "%.1fx".format(zoomRatio),
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White,
+            Readout(
+                text = "%.1f×".format(zoomRatio),
+                color = Gold,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = 120.dp)
-                    .background(Color.Black.copy(alpha = 0.4f), CircleShape)
-                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                    .background(Ink.copy(alpha = 0.55f), CircleShape)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             )
         }
 
@@ -341,8 +353,8 @@ private fun CameraContent(
             ) {
                 Text(
                     text = "$countdown",
-                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 84.sp),
-                    color = Color.White
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 120.sp),
+                    color = Gold
                 )
             }
         }
@@ -355,14 +367,14 @@ private fun CameraContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onClose) {
-                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Ivory)
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { showGrid = !showGrid }) {
                 Icon(
                     imageVector = Icons.Rounded.Grid3x3,
                     contentDescription = if (showGrid) "Hide grid" else "Show grid",
-                    tint = if (showGrid) MaterialTheme.colorScheme.primary else Color.White
+                    tint = if (showGrid) Gold else Ivory
                 )
             }
             IconButton(
@@ -376,13 +388,9 @@ private fun CameraContent(
                 }
             ) {
                 if (timerSeconds == 0) {
-                    Icon(Icons.Rounded.TimerOff, contentDescription = "Self-timer off", tint = Color.White)
+                    Icon(Icons.Rounded.TimerOff, contentDescription = "Self-timer off", tint = Ivory)
                 } else {
-                    Text(
-                        text = "${timerSeconds}s",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Readout(text = "${timerSeconds}s", color = Gold)
                 }
             }
             IconButton(
@@ -401,7 +409,7 @@ private fun CameraContent(
                         else -> Icons.Rounded.FlashOff
                     },
                     contentDescription = "Flash",
-                    tint = Color.White
+                    tint = if (flashMode == ImageCapture.FLASH_MODE_OFF) Ivory else Gold
                 )
             }
         }
@@ -422,15 +430,19 @@ private fun CameraContent(
                     )
                 },
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
+                    .size(52.dp)
+                    .background(Ink.copy(alpha = 0.55f), CircleShape)
+                    .border(1.dp, Ivory.copy(alpha = 0.2f), CircleShape)
             ) {
-                Icon(Icons.Rounded.PhotoLibrary, contentDescription = "Gallery", tint = Color.White)
+                Icon(Icons.Rounded.PhotoLibrary, contentDescription = "Gallery", tint = Ivory)
             }
 
-            ShutterButton(
-                enabled = !isCapturing && countdown == 0,
-                onClick = ::shutterPressed
+            val shutterEnabled = !isCapturing && countdown == 0
+            Shutter(
+                onClick = { if (shutterEnabled) shutterPressed() },
+                size = 84.dp,
+                pulsing = shutterEnabled,
+                modifier = Modifier.alpha(if (shutterEnabled) 1f else 0.5f)
             )
 
             IconButton(
@@ -442,32 +454,45 @@ private fun CameraContent(
                     }
                 },
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
+                    .size(52.dp)
+                    .background(Ink.copy(alpha = 0.55f), CircleShape)
+                    .border(1.dp, Ivory.copy(alpha = 0.2f), CircleShape)
             ) {
-                Icon(Icons.Rounded.Cameraswitch, contentDescription = "Flip camera", tint = Color.White)
+                Icon(Icons.Rounded.Cameraswitch, contentDescription = "Flip camera", tint = Ivory)
             }
         }
     }
 }
 
+/**
+ * Gold corner brackets that breathe slowly — the viewfinder is alive without any
+ * of it getting in the way of the scene.
+ */
 @Composable
-private fun ShutterButton(enabled: Boolean, onClick: () -> Unit) {
-    // The shutter is a plain circle with no icon or label, so it needs an explicit
-    // role and description or a screen reader announces nothing at all — the one
-    // control on this screen that absolutely must be reachable.
-    Box(
-        modifier = Modifier
-            .size(78.dp)
-            .semantics {
-                contentDescription = "Take photo"
-                role = Role.Button
-            }
-            .border(3.dp, Color.White.copy(alpha = if (enabled) 1f else 0.4f), CircleShape)
-            .padding(6.dp)
-            .background(Color.White.copy(alpha = if (enabled) 1f else 0.4f), CircleShape)
-            .clickable(enabled = enabled, onClick = onClick)
+private fun ViewfinderBrackets(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "viewfinder")
+    val breathe by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3200, easing = Settle), RepeatMode.Reverse),
+        label = "breathe"
     )
+    Canvas(modifier = modifier) {
+        val inset = 34.dp.toPx()
+        val top = size.height * 0.2f
+        val bottom = size.height * 0.72f
+        val len = 26.dp.toPx()
+        val stroke = 2.dp.toPx()
+        val grow = 3.dp.toPx() * breathe
+        val color = Gold.copy(alpha = 0.7f + 0.3f * breathe)
+        val l = inset - grow; val r = size.width - inset + grow
+        val t = top - grow; val b = bottom + grow
+        drawLine(color, Offset(l, t), Offset(l + len, t), stroke); drawLine(color, Offset(l, t), Offset(l, t + len), stroke)
+        drawLine(color, Offset(r, t), Offset(r - len, t), stroke); drawLine(color, Offset(r, t), Offset(r, t + len), stroke)
+        drawLine(color, Offset(l, b), Offset(l + len, b), stroke); drawLine(color, Offset(l, b), Offset(l, b - len), stroke)
+        drawLine(color, Offset(r, b), Offset(r - len, b), stroke); drawLine(color, Offset(r, b), Offset(r, b - len), stroke)
+        drawCircle(Gold, radius = 3.dp.toPx(), center = Offset(size.width / 2f, (top + bottom) / 2f))
+    }
 }
 
 /**

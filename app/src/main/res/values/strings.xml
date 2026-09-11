@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Roll</string>
+    <string name="app_name">WeWere</string>
     <string name="notification_channel_photos">photos</string>
     <string name="notification_channel_photos_name">New photos</string>
     <string name="notification_channel_activity">activity</string>
