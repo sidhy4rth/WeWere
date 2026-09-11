@@ -66,6 +66,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -449,9 +453,16 @@ private fun CameraContent(
 
 @Composable
 private fun ShutterButton(enabled: Boolean, onClick: () -> Unit) {
+    // The shutter is a plain circle with no icon or label, so it needs an explicit
+    // role and description or a screen reader announces nothing at all — the one
+    // control on this screen that absolutely must be reachable.
     Box(
         modifier = Modifier
             .size(78.dp)
+            .semantics {
+                contentDescription = "Take photo"
+                role = Role.Button
+            }
             .border(3.dp, Color.White.copy(alpha = if (enabled) 1f else 0.4f), CircleShape)
             .padding(6.dp)
             .background(Color.White.copy(alpha = if (enabled) 1f else 0.4f), CircleShape)

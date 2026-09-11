@@ -20,6 +20,12 @@ interface AuthRepository {
     suspend fun linkAnonymousToEmail(name: String, email: String, password: String): Outcome<User>
     suspend fun linkAnonymousToGoogle(idToken: String): Outcome<User>
 
+    /**
+     * Creates the profile document if it is missing. Called on launch so an account
+     * whose first write was interrupted repairs itself instead of showing as "Someone".
+     */
+    suspend fun ensureProfile(): Outcome<Unit>
+
     suspend fun sendPasswordReset(email: String): Outcome<Unit>
     suspend fun signOut(): Outcome<Unit>
     suspend fun deleteAccount(): Outcome<Unit>

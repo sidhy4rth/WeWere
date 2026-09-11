@@ -23,6 +23,9 @@ class RollApplication : Application(), Configuration.Provider, ImageLoaderFactor
 
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG && BuildConfig.USE_FIREBASE_EMULATOR) {
+            com.google.firebase.firestore.FirebaseFirestore.setLoggingEnabled(true)
+        }
         createNotificationChannels()
         // Anything left in the queue from a previous run resumes on launch.
         uploadScheduler.ensureRunning()

@@ -13,9 +13,12 @@ import com.rollapp.shared.core.FirestorePaths
 import com.rollapp.shared.core.Outcome
 import com.rollapp.shared.core.firebaseCall
 import com.rollapp.shared.domain.model.User
+import com.rollapp.shared.di.ApplicationScope
 import com.rollapp.shared.domain.repository.AuthRepository
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -24,7 +27,8 @@ import kotlinx.coroutines.tasks.await
 @Singleton
 class FirebaseAuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : AuthRepository {
 
     override val currentUser: Flow<User?> = callbackFlow {
@@ -53,7 +57,7 @@ class FirebaseAuthRepository @Inject constructor(
         return firebaseCall {
             val result = auth.signInWithEmailAndPassword(email.trim(), password).await()
             val user = result.user ?: throw IllegalStateException("Sign-in returned no user")
-            upsertProfile(user)
+            provisionProfile(user)
         }
     }
 
@@ -65,14 +69,14 @@ class FirebaseAuthRepository @Inject constructor(
             val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
             val user = result.user ?: throw IllegalStateException("Sign-up returned no user")
             updateAuthDisplayName(user, name.trim())
-            upsertProfile(user, overrideName = name.trim())
+            provisionProfile(user, overrideName = name.trim())
         }
     }
 
     override suspend fun signInAnonymously(): Outcome<User> = firebaseCall {
         val result = auth.signInAnonymously().await()
         val user = result.user ?: throw IllegalStateException("Anonymous sign-in returned no user")
-        upsertProfile(user, overrideName = "Guest")
+        provisionProfile(user, overrideName = "Guest")
     }
 
     override suspend fun linkAnonymousToEmail(name: String, email: String, password: String): Outcome<User> {
@@ -88,7 +92,7 @@ class FirebaseAuthRepository @Inject constructor(
             val user = result.user ?: current
             updateAuthDisplayName(user, name.trim())
             // The uid is preserved by linking, so every existing membership survives.
-            upsertProfile(user, overrideName = name.trim(), markPermanent = true)
+            provisionProfile(user, overrideName = name.trim(), markPermanent = true)
         }
     }
 
@@ -99,7 +103,7 @@ class FirebaseAuthRepository @Inject constructor(
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val result = current.linkWithCredential(credential).await()
             val user = result.user ?: current
-            upsertProfile(user, markPermanent = true)
+            provisionProfile(user, markPermanent = true)
         }
     }
 
@@ -119,6 +123,35 @@ class FirebaseAuthRepository @Inject constructor(
             // longer satisfy the `request.auth.uid == userId` rule that guards it.
             firestore.collection(FirestorePaths.USERS).document(user.uid).delete().await()
             user.delete().await()
+        }
+    }
+
+    /**
+     * Runs the profile write on the application scope and waits for it there.
+     *
+     * The caller is a ViewModel that is about to be destroyed: signing in flips the
+     * auth-state listener, which navigates away from the sign-in screen and cancels
+     * its scope. Handing the work to a longer-lived scope means the cancellation
+     * stops the *waiting*, not the write.
+     */
+    private suspend fun provisionProfile(
+        user: FirebaseUser,
+        overrideName: String? = null,
+        markPermanent: Boolean = false
+    ): User = appScope.async { upsertProfile(user, overrideName, markPermanent) }.await()
+
+    /**
+     * Makes sure the signed-in user has a profile document, repairing accounts whose
+     * first attempt never landed. Idempotent and safe to call on every launch.
+     */
+    override suspend fun ensureProfile(): Outcome<Unit> {
+        val user = auth.currentUser ?: return Outcome.Failure(AppError.NotAuthenticated)
+        return firebaseCall {
+            val doc = firestore.collection(FirestorePaths.USERS).document(user.uid).get().await()
+            if (!doc.exists()) {
+                provisionProfile(user, overrideName = if (user.isAnonymous) "Guest" else null)
+            }
+            Unit
         }
     }
 

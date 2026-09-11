@@ -38,7 +38,7 @@ import kotlinx.coroutines.tasks.await
 /** Decides the first screen and keeps the splash up until it knows. */
 @HiltViewModel
 class RootViewModel @Inject constructor(
-    authRepository: AuthRepository,
+    private val authRepository: AuthRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
@@ -50,6 +50,11 @@ class RootViewModel @Inject constructor(
      * The FCM token is stored against the signed-in user, not the install: two people
      * sharing a phone must not receive each other's group notifications.
      */
+    /** Repairs a profile whose creation was interrupted on a previous run. */
+    fun ensureProfile() {
+        viewModelScope.launch { authRepository.ensureProfile() }
+    }
+
     fun registerPushToken() {
         viewModelScope.launch {
             runCatching {
@@ -85,6 +90,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             root.startDestination.collect { destination ->
                 if (destination == Routes.HOME) {
+                    root.ensureProfile()
                     root.registerPushToken()
                     requestNotificationPermissionIfNeeded()
                 }

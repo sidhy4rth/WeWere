@@ -18,6 +18,14 @@ val localProps = Properties().apply {
 }
 val webClientId: String = localProps.getProperty("WEB_CLIENT_ID") ?: ""
 
+// Point a debug build at a local Firebase Emulator Suite instead of a real project.
+// Set USE_FIREBASE_EMULATOR=true in local.properties to try the app end to end
+// without creating a Firebase project at all.
+val useFirebaseEmulator: Boolean =
+    localProps.getProperty("USE_FIREBASE_EMULATOR")?.toBoolean() ?: false
+val emulatorHost: String =
+    localProps.getProperty("FIREBASE_EMULATOR_HOST") ?: "10.0.2.2"
+
 android {
     namespace = "com.rollapp.shared"
     compileSdk = 35
@@ -40,8 +48,13 @@ android {
         debug {
             isMinifyEnabled = false
             applicationIdSuffix = ""
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "$useFirebaseEmulator")
+            buildConfigField("String", "EMULATOR_HOST", "\"$emulatorHost\"")
         }
         release {
+            // A release build never talks to an emulator, whatever local.properties says.
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
+            buildConfigField("String", "EMULATOR_HOST", "\"\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

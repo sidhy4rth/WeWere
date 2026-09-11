@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug builds only.
+
+  The Firebase Emulator Suite speaks plain HTTP on the developer's own machine,
+  which Android has blocked by default since API 28. This opens cleartext for
+  exactly the two loopback addresses an emulator or a USB-attached device uses to
+  reach it, and nothing else — every other host still requires TLS.
+
+  This file lives in src/debug, so it cannot reach a release build.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- The host machine, as seen from inside an Android emulator. -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- A device reaching the host over `adb reverse`. -->
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

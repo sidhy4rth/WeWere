@@ -14,6 +14,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.ktx.messaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ktx.storage
+import com.rollapp.shared.BuildConfig
 import com.rollapp.shared.data.local.RollDatabase
 import com.rollapp.shared.data.local.UploadDao
 import dagger.Module
@@ -30,14 +31,28 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun provideAuth(): FirebaseAuth = Firebase.auth
+    fun provideAuth(): FirebaseAuth = Firebase.auth.apply {
+        if (BuildConfig.USE_FIREBASE_EMULATOR) {
+            useEmulator(BuildConfig.EMULATOR_HOST, AUTH_EMULATOR_PORT)
+        }
+    }
 
     @Provides
     @Singleton
     fun provideFirestore(): FirebaseFirestore = Firebase.firestore.apply {
         // Offline persistence is what makes the app usable on a patchy hotel wifi:
         // cached photo documents render immediately and writes queue locally.
+        //
+        // The emulator host goes into the same settings object rather than through
+        // useEmulator(), because Firestore refuses a settings change once the
+        // instance has been used and the two calls would race.
         firestoreSettings = FirebaseFirestoreSettings.Builder()
+            .apply {
+                if (BuildConfig.USE_FIREBASE_EMULATOR) {
+                    setHost("${BuildConfig.EMULATOR_HOST}:$FIRESTORE_EMULATOR_PORT")
+                    setSslEnabled(false)
+                }
+            }
             .setLocalCacheSettings(
                 PersistentCacheSettings.newBuilder()
                     .setSizeBytes(FirebaseFirestoreSettings.CACHE_SIZE_UNLIMITED)
@@ -49,6 +64,9 @@ object FirebaseModule {
     @Provides
     @Singleton
     fun provideStorage(): FirebaseStorage = Firebase.storage.apply {
+        if (BuildConfig.USE_FIREBASE_EMULATOR) {
+            useEmulator(BuildConfig.EMULATOR_HOST, STORAGE_EMULATOR_PORT)
+        }
         maxUploadRetryTimeMillis = TimeUnit.MINUTES.toMillis(2)
         maxDownloadRetryTimeMillis = TimeUnit.MINUTES.toMillis(2)
         maxOperationRetryTimeMillis = TimeUnit.SECONDS.toMillis(30)
@@ -67,4 +85,9 @@ object FirebaseModule {
 
     @Provides
     fun provideUploadDao(database: RollDatabase): UploadDao = database.uploadDao()
+
+    /** Defaults from `firebase.json`. 10.0.2.2 is the host loopback seen from an emulator. */
+    private const val AUTH_EMULATOR_PORT = 9099
+    private const val FIRESTORE_EMULATOR_PORT = 8080
+    private const val STORAGE_EMULATOR_PORT = 9199
 }
