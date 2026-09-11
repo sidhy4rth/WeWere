@@ -1,0 +1,482 @@
+package com.rollapp.shared.ui.carousel
+
+import android.Manifest
+import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.rollapp.shared.core.Limits
+import com.rollapp.shared.core.TimeFormat
+import com.rollapp.shared.domain.model.Photo
+import com.rollapp.shared.domain.model.Reaction
+import com.rollapp.shared.ui.components.Sharing
+import com.rollapp.shared.ui.components.UserAvatar
+import com.rollapp.shared.ui.theme.PhotoScrimBottom
+import com.rollapp.shared.ui.theme.PhotoScrimTop
+import kotlin.math.abs
+import kotlin.math.roundToInt
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun CarouselScreen(
+    onClose: () -> Unit,
+    viewModel: CarouselViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val myReaction by viewModel.currentReaction.collectAsStateWithLifecycle()
+    val event by viewModel.events.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    var controlsVisible by remember { mutableStateOf(true) }
+    var isZoomed by remember { mutableStateOf(false) }
+    var dismissOffset by remember { mutableStateOf(0f) }
+    var editingCaptionFor by remember { mutableStateOf<Photo?>(null) }
+
+    // Scoped storage arrived in Android 10; below that, writing into the shared
+    // Pictures collection needs an explicit grant. Above it, asking would be both
+    // pointless and refused.
+    val needsLegacyWrite = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+    val writePermission = if (needsLegacyWrite) {
+        rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    } else {
+        null
+    }
+    var pendingDownload by remember { mutableStateOf<Photo?>(null) }
+
+    fun requestDownload(photo: Photo) {
+        if (writePermission == null || writePermission.status.isGranted) {
+            viewModel.download(photo)
+        } else {
+            pendingDownload = photo
+            writePermission.launchPermissionRequest()
+        }
+    }
+
+    // Resume the save the moment the grant lands, so the user does not have to tap
+    // Save a second time.
+    LaunchedEffect(writePermission?.status?.isGranted) {
+        val photo = pendingDownload ?: return@LaunchedEffect
+        if (writePermission?.status?.isGranted == true) {
+            viewModel.download(photo)
+            pendingDownload = null
+        }
+    }
+
+    val startIndex = remember(state.photos, viewModel.initialPhotoId) {
+        state.photos.indexOfFirst { it.id == viewModel.initialPhotoId }.coerceAtLeast(0)
+    }
+
+    val pagerState = rememberPagerState(
+        initialPage = startIndex,
+        pageCount = { state.photos.size }
+    )
+
+    // Re-seed once the feed arrives, otherwise the pager opens on page 0 while the
+    // photo list is still empty and the tapped photo is never shown.
+    LaunchedEffect(state.photos.isNotEmpty()) {
+        if (state.photos.isNotEmpty() && startIndex > 0 && pagerState.currentPage == 0) {
+            pagerState.scrollToPage(startIndex)
+        }
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { page ->
+            state.photos.getOrNull(page)?.let { viewModel.onPageChanged(it.id) }
+            // Reaching the end of the loaded window pulls in the next page.
+            if (page >= state.photos.size - 3) viewModel.loadOlder()
+        }
+    }
+
+    LaunchedEffect(event) {
+        when (val current = event) {
+            is CarouselEvent.Saved -> {
+                snackbarHostState.showSnackbar(current.message)
+                viewModel.consumeEvent()
+            }
+            is CarouselEvent.ShareReady -> {
+                Sharing.sharePhoto(context, current.uri, current.caption)
+                viewModel.consumeEvent()
+            }
+            is CarouselEvent.Failed -> {
+                snackbarHostState.showSnackbar(current.error.message ?: "That didn't work")
+                viewModel.consumeEvent()
+            }
+            CarouselEvent.Deleted -> {
+                viewModel.consumeEvent()
+                if (state.photos.size <= 1) onClose()
+            }
+            null -> Unit
+        }
+    }
+
+    editingCaptionFor?.let { photo ->
+        CaptionDialog(
+            initial = photo.caption.orEmpty(),
+            onDismiss = { editingCaptionFor = null },
+            onSave = { text ->
+                viewModel.setCaption(photo.id, text.takeIf { it.isNotBlank() })
+                editingCaptionFor = null
+            }
+        )
+    }
+
+    val dismissProgress = (abs(dismissOffset) / DISMISS_THRESHOLD_PX).coerceIn(0f, 1f)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Fading the backdrop as the photo is dragged away is what makes the
+            // gesture feel like dismissal rather than a scroll that went wrong.
+            .background(Color.Black.copy(alpha = 1f - dismissProgress * 0.6f))
+    ) {
+        if (state.isLoading && state.photos.isEmpty()) {
+            CircularProgressIndicator(
+                color = Color.White,
+                strokeWidth = 2.dp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+
+        HorizontalPager(
+            state = pagerState,
+            // One page either side stays decoded, so a swipe shows the next photo
+            // immediately instead of a placeholder.
+            beyondViewportPageCount = 1,
+            userScrollEnabled = !isZoomed,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationY = dismissOffset
+                    val shrink = 1f - dismissProgress * 0.12f
+                    scaleX = shrink
+                    scaleY = shrink
+                }
+                .pointerInput(isZoomed) {
+                    if (isZoomed) return@pointerInput
+                    detectVerticalDragGestures(
+                        onDragEnd = {
+                            if (abs(dismissOffset) > DISMISS_THRESHOLD_PX) onClose()
+                            else dismissOffset = 0f
+                        },
+                        onDragCancel = { dismissOffset = 0f },
+                        onVerticalDrag = { _, delta -> dismissOffset += delta }
+                    )
+                }
+        ) { page ->
+            val photo = state.photos.getOrNull(page) ?: return@HorizontalPager
+
+            ZoomableImage(
+                onTap = { controlsVisible = !controlsVisible },
+                onZoomChanged = { isZoomed = it }
+            ) { imageModifier ->
+                val painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(context)
+                        .data(photo.imageUrl)
+                        // The cached grid thumbnail fills the frame instantly while the
+                        // full-resolution image decodes over it.
+                        .placeholderMemoryCacheKey(photo.thumbnailUrl)
+                        .crossfade(200)
+                        .build()
+                )
+
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    androidx.compose.foundation.Image(
+                        painter = painter,
+                        contentDescription = photo.caption ?: "Photo by ${photo.uploaderName}",
+                        contentScale = ContentScale.Fit,
+                        modifier = imageModifier
+                    )
+
+                    if (painter.state is AsyncImagePainter.State.Loading) {
+                        AsyncImage(
+                            model = photo.thumbnailUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+        }
+
+        val currentPhoto = state.photos.getOrNull(pagerState.currentPage)
+
+        AnimatedVisibility(
+            visible = controlsVisible && currentPhoto != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            currentPhoto?.let { photo ->
+                TopControls(
+                    photo = photo,
+                    canDelete = viewModel.canDelete(photo),
+                    canEditCaption = photo.uploadedBy == state.myUid,
+                    onClose = onClose,
+                    onDownload = { requestDownload(photo) },
+                    onShare = { viewModel.share(photo) },
+                    onDelete = { viewModel.deletePhoto(photo.id) },
+                    onEditCaption = { editingCaptionFor = photo },
+                    onReport = { viewModel.report(photo.id, "inappropriate") }
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = controlsVisible && currentPhoto != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            currentPhoto?.let { photo ->
+                BottomControls(
+                    photo = photo,
+                    myReaction = myReaction,
+                    onReact = { viewModel.toggleReaction(photo.id, it) }
+                )
+            }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 100.dp)
+        )
+    }
+}
+
+@Composable
+private fun TopControls(
+    photo: Photo,
+    canDelete: Boolean,
+    canEditCaption: Boolean,
+    onClose: () -> Unit,
+    onDownload: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit,
+    onEditCaption: () -> Unit,
+    onReport: () -> Unit
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(PhotoScrimTop, Color.Transparent)))
+            .statusBarsPadding()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onClose) {
+            Icon(Icons.Rounded.ArrowBack, contentDescription = "Close", tint = Color.White)
+        }
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = onDownload) {
+            Icon(Icons.Rounded.Download, contentDescription = "Save to device", tint = Color.White)
+        }
+        IconButton(onClick = onShare) {
+            Icon(Icons.Rounded.Share, contentDescription = "Share", tint = Color.White)
+        }
+        Box {
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(Icons.Rounded.MoreVert, contentDescription = "More", tint = Color.White)
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                if (canEditCaption) {
+                    DropdownMenuItem(
+                        text = { Text(if (photo.caption.isNullOrBlank()) "Add a caption" else "Edit caption") },
+                        onClick = { menuOpen = false; onEditCaption() }
+                    )
+                }
+                if (canDelete) {
+                    DropdownMenuItem(
+                        text = { Text("Delete photo") },
+                        onClick = { menuOpen = false; onDelete() }
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text("Report photo") },
+                    onClick = { menuOpen = false; onReport() }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Attribution and reactions only. The brief was explicit that this should not drift
+ * into a social feed, so there is no comment thread, no view count and no share-back.
+ */
+@Composable
+private fun BottomControls(
+    photo: Photo,
+    myReaction: Reaction?,
+    onReact: (Reaction) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(Color.Transparent, PhotoScrimBottom)))
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        if (!photo.caption.isNullOrBlank()) {
+            Text(
+                text = photo.caption,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(10.dp))
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            UserAvatar(
+                name = photo.uploaderName,
+                photoUrl = photo.uploaderPhotoUrl,
+                seed = photo.uploadedBy,
+                size = 32.dp
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = photo.uploaderName,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White
+                )
+                Text(
+                    text = TimeFormat.relative(photo.capturedAt ?: photo.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.75f)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Reaction.entries.forEach { reaction ->
+                val count = photo.reactionCounts[reaction.key] ?: 0
+                val selected = myReaction == reaction
+
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(
+                            if (selected) Color.White.copy(alpha = 0.28f)
+                            else Color.White.copy(alpha = 0.12f)
+                        )
+                        .clickable { onReact(reaction) }
+                        .padding(horizontal = 11.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = reaction.emoji, style = MaterialTheme.typography.bodyMedium)
+                    if (count > 0) {
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            text = "$count",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CaptionDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var draft by remember { mutableStateOf(initial) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Caption") },
+        text = {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { if (it.length <= Limits.MAX_CAPTION_LENGTH) draft = it },
+                placeholder = { Text("Bro thought he could drive 😭") },
+                maxLines = 3,
+                supportingText = { Text("${Limits.MAX_CAPTION_LENGTH - draft.length} left") }
+            )
+        },
+        confirmButton = { TextButton(onClick = { onSave(draft) }) { Text("Save") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+/** How far the photo must be dragged before letting go closes the viewer. */
+private const val DISMISS_THRESHOLD_PX = 320f

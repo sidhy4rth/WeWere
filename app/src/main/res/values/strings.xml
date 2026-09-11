@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Roll</string>
+    <string name="notification_channel_photos">photos</string>
+    <string name="notification_channel_photos_name">New photos</string>
+    <string name="notification_channel_activity">activity</string>
+    <string name="notification_channel_activity_name">Group activity</string>
+    <string name="notification_channel_uploads">uploads</string>
+    <string name="notification_channel_uploads_name">Uploads</string>
+</resources>

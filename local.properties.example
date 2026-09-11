@@ -1,0 +1,10 @@
+# Copy to local.properties (which is git-ignored) and fill in.
+#
+# sdk.dir is written for you by Android Studio on first open. If you build from the
+# command line instead, point it at your SDK.
+sdk.dir=/Users/YOU/Library/Android/sdk
+
+# Firebase Console -> Authentication -> Sign-in method -> Google
+#   -> Web SDK configuration -> Web client ID
+# Leave blank to build without Google Sign-In; email/password and guest still work.
+WEB_CLIENT_ID=

@@ -1,0 +1,31 @@
+# Android / Gradle
+*.iml
+.gradle/
+.kotlin/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# IDE
+.idea/
+*.hprof
+
+# macOS
+.DS_Store
+
+# Secrets and machine-specific config.
+# google-services.json identifies YOUR Firebase project; copy the .example and fill
+# it in rather than committing your own.
+/app/google-services.json
+
+# Node
+node_modules/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

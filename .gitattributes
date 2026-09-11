@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jar binary
+*.apk binary
+*.aab binary
+*.keystore binary
+
+gradlew text eol=lf
+# A Windows batch file must keep CRLF or cmd.exe mis-parses it.
+*.bat text eol=crlf
+gradle/wrapper/gradle-wrapper.jar binary
+
+# Keep generated lockfiles out of diffs and language stats.
+rules-tests/package-lock.json linguist-generated=true

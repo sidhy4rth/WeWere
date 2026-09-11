@@ -1,0 +1,76 @@
+rules_version = '2';
+
+// Roll — Cloud Storage security rules.
+//
+// IMPORTANT, read before deploying:
+//
+// Storage rules cannot query Firestore. There is no exists() here, so these rules
+// physically cannot check "is this user a member of this group" the way the Firestore
+// rules do. That is a platform constraint, not an oversight.
+//
+// Two tiers are provided below. Tier 1 is active and works on the free Spark plan.
+// Tier 2 is stronger and needs the Cloud Function in functions/ (which needs Blaze).
+// See README.md → "Privacy: what these rules do and don't guarantee".
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function underSizeLimit() {
+      return request.resource.size < 15 * 1024 * 1024;
+    }
+
+    // Tier 2 helper. Reads the `groups` custom claim that functions/index.js writes
+    // onto the user's token whenever they join or leave a group.
+    function inGroupClaim(groupId) {
+      return signedIn()
+        && request.auth.token.groups != null
+        && groupId in request.auth.token.groups;
+    }
+
+    match /groups/{groupId}/{category}/{fileName} {
+
+      // --- Tier 1 (active): authenticated users only ------------------------
+      //
+      // Object names are Firestore auto-ids (~120 bits), listing is not granted to
+      // clients, and the only place a path is published is the group's Firestore
+      // document — which IS membership-gated. So reaching another group's photo
+      // requires already having been given its exact path.
+      allow read: if signedIn();
+
+      // --- Tier 2 (stronger): uncomment this line and delete the one above ---
+      // allow read: if inGroupClaim(groupId);
+
+      // Writes are constrained regardless of tier: an image, under the size cap,
+      // and only into the three category folders the app actually uses.
+      allow write: if signedIn()
+        && isImage()
+        && underSizeLimit()
+        && category in ['full', 'thumbs', 'covers'];
+
+      allow delete: if signedIn();
+    }
+
+    // Profile pictures. Readable by any signed-in user because they appear on member
+    // lists and photo bylines; writable only by their owner.
+    match /avatars/{userId} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && request.auth.uid == userId.split('\\.')[0]
+        && isImage()
+        && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Nothing else in the bucket is reachable from a client.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

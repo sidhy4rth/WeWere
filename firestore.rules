@@ -1,0 +1,221 @@
+rules_version = '2';
+
+// Roll — Firestore security rules.
+//
+// Guiding rule: membership is the only thing that grants access to a group's photos,
+// and membership is proven by the existence of groups/{groupId}/members/{uid}. The
+// client is never trusted to assert it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- helpers
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMe(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isMember(groupId) {
+      return signedIn() && exists(
+        /databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)
+      );
+    }
+
+    function memberRole(groupId) {
+      return get(
+        /databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)
+      ).data.role;
+    }
+
+    function isAdmin(groupId) {
+      return isMember(groupId) && memberRole(groupId) == 'ADMIN';
+    }
+
+    // Batched writes are each evaluated against the state BEFORE the batch. When a
+    // user creates or joins a group, their member document and the activity event
+    // land in the same commit, so exists() cannot see the membership yet.
+    // existsAfter()/getAfter() evaluate against the committed result instead, which
+    // is the only way these two flows can pass.
+    function isMemberAfter(groupId) {
+      return signedIn() && existsAfter(
+        /databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)
+      );
+    }
+
+    // Which keys a write is touching, relative to what is already stored.
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function holdsValidInvite(groupId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode));
+    }
+
+    // ------------------------------------------------------------------ users
+
+    match /users/{userId} {
+      // A profile is readable by anyone signed in: member lists and photo bylines
+      // resolve names and avatars. Nothing private lives on this document.
+      allow read: if signedIn();
+      allow create: if isMe(userId);
+      allow update: if isMe(userId);
+      allow delete: if isMe(userId);
+
+      // Pointers to the groups this user belongs to. Only the owner may read them —
+      // which groups someone is in is not public.
+      match /memberships/{groupId} {
+        allow read: if isMe(userId);
+        // Written as part of joining, and by an admin removing someone.
+        allow create: if isMe(userId);
+        allow update: if isMe(userId) || isAdmin(groupId);
+        allow delete: if isMe(userId) || isAdmin(groupId);
+      }
+
+      // FCM tokens. Private to the user; never readable by other clients.
+      match /devices/{token} {
+        allow read, write: if isMe(userId);
+      }
+    }
+
+    // ---------------------------------------------------------------- invites
+
+    // Invite codes resolve to a small public preview so a prospective member can see
+    // what they are joining before they commit. It carries a name and two counts —
+    // deliberately no photos, no member list, and no way to enumerate: the document
+    // id IS the secret, and listing the collection is denied outright.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdmin(resource.data.groupId);
+      allow delete: if isAdmin(resource.data.groupId);
+    }
+
+    // ----------------------------------------------------------------- groups
+
+    match /groups/{groupId} {
+      allow read: if isMember(groupId);
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.memberCount == 1
+        && request.resource.data.photoCount == 0;
+
+      allow update: if
+        // Admins may edit the group's identity.
+        isAdmin(groupId)
+
+        // Members maintain the denormalised counters as they add photos.
+        || (isMember(groupId)
+            && changedKeys().hasOnly(['photoCount', 'lastActivityAt', 'coverPhotoUrl']))
+
+        // A joining non-member may do exactly one thing: add themselves to the count.
+        // Capping the delta at +1 stops a stranger from editing anything else, and
+        // the member document created alongside it is what actually grants access.
+        || (signedIn()
+            && changedKeys().hasOnly(['memberCount', 'lastActivityAt', 'recentMemberPhotos'])
+            && request.resource.data.memberCount == resource.data.memberCount + 1)
+
+        // Someone leaving decrements it on the way out.
+        || (signedIn()
+            && changedKeys().hasOnly(['memberCount', 'lastActivityAt'])
+            && request.resource.data.memberCount == resource.data.memberCount - 1);
+
+      allow delete: if isAdmin(groupId);
+
+      // Coalescing windows for push fan-out are written only by Cloud Functions,
+      // which bypass these rules. No client may touch them.
+      match /notifyWindows/{userId} {
+        allow read, write: if false;
+      }
+
+      // ---------------------------------------------------------- members
+
+      match /members/{memberId} {
+        allow read: if isMember(groupId);
+
+        // Joining: you may only ever create your own membership, and only as a
+        // plain member. Self-promotion to ADMIN is refused here.
+        allow create: if isMe(memberId)
+          && request.resource.data.role == 'MEMBER'
+          && request.resource.data.photoCount == 0;
+
+        // The creator's own ADMIN row, written in the same batch as the group itself.
+        // getAfter() is required here: the group document does not exist yet at the
+        // point this write is evaluated.
+        allow create: if isMe(memberId)
+          && request.resource.data.role == 'ADMIN'
+          && getAfter(/databases/$(database)/documents/groups/$(groupId)).data.createdBy
+             == request.auth.uid;
+
+        allow update: if
+          // Your own denormalised name/avatar, and your photo tally.
+          (isMe(memberId) && changedKeys().hasOnly(['name', 'photoUrl', 'photoCount']))
+          // Another member's tally moves when their photo is deleted by an admin.
+          || (isMember(groupId) && changedKeys().hasOnly(['photoCount']))
+          // Admins may hand over the admin role.
+          || isAdmin(groupId);
+
+        // Leaving, or being removed by an admin.
+        allow delete: if isMe(memberId) || isAdmin(groupId);
+      }
+
+      // ----------------------------------------------------------- photos
+
+      match /photos/{photoId} {
+        allow read: if isMember(groupId);
+
+        allow create: if isMember(groupId)
+          && request.resource.data.uploadedBy == request.auth.uid;
+
+        allow update: if
+          // The uploader may edit their own caption.
+          (resource.data.uploadedBy == request.auth.uid
+            && isMember(groupId)
+            && changedKeys().hasOnly(['caption']))
+          // Anyone in the group may move a reaction counter.
+          || (isMember(groupId) && changedKeys().hasOnly(['reactionCounts']));
+
+        // Your own photo, or an admin clearing something inappropriate.
+        allow delete: if isMember(groupId)
+          && (resource.data.uploadedBy == request.auth.uid || isAdmin(groupId));
+
+        match /reactions/{userId} {
+          allow read: if isMember(groupId);
+          // One reaction document per person, and only your own.
+          allow write: if isMe(userId) && isMember(groupId);
+        }
+      }
+
+      // --------------------------------------------------------- activity
+
+      match /activity/{eventId} {
+        allow read: if isMember(groupId);
+
+        // isMemberAfter rather than isMember: the GROUP_CREATED and MEMBER_JOINED
+        // events are written in the same batch that creates the membership granting
+        // the right to write them.
+        allow create: if isMemberAfter(groupId)
+          && request.resource.data.actorId == request.auth.uid;
+
+        // Activity is an append-only log.
+        allow update: if false;
+        allow delete: if isAdmin(groupId);
+      }
+    }
+
+    // ---------------------------------------------------------------- reports
+
+    // Write-only from the client. A user can file a report but cannot read anyone
+    // else's, and cannot see what was done about it.
+    match /reports/{reportId} {
+      allow create: if signedIn() && request.resource.data.reportedBy == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+  }
+}
