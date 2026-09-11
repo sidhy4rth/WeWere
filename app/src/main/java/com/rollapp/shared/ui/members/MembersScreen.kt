@@ -47,6 +47,9 @@ import com.rollapp.shared.ui.components.InlineError
 import com.rollapp.shared.ui.components.QrCode
 import com.rollapp.shared.ui.components.Sharing
 import com.rollapp.shared.ui.components.UserAvatar
+import com.rollapp.shared.ui.components.RollTopBar
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.components.HairlineButton
 
 @Composable
 fun MembersScreen(
@@ -80,15 +83,9 @@ fun MembersScreen(
     }
 
     Scaffold(
+        containerColor = Ink,
         topBar = {
-            TopAppBar(
-                title = { Text("Members") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            RollTopBar(title = "Members", onBack = onBack)
         }
     ) { padding ->
         LazyColumn(
@@ -130,20 +127,14 @@ fun MembersScreen(
                     }
                 }
                 item(key = "invite") {
-                    OutlinedButton(
+                    HairlineButton(
+                        text = "Invite friends · ${group.inviteCode}",
+                        icon = Icons.Rounded.PersonAdd,
                         onClick = {
                             Sharing.shareInvite(context, group.name, group.inviteCode, group.inviteLink)
                         },
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .height(50.dp)
-                    ) {
-                        Icon(Icons.Rounded.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Invite friends · ${group.inviteCode}")
-                    }
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                    )
                 }
             }
 

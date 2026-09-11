@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -308,3 +311,63 @@ fun Shutter(
         )
     }
 }
+
+/** The app's top bar: a chevron, a serif title, optional actions. No tonal tint. */
+@Composable
+fun RollTopBar(
+    title: String,
+    onBack: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {}
+) {
+    androidx.compose.foundation.layout.Column(modifier = modifier.background(com.rollapp.shared.ui.theme.Ink)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onBack != null) {
+                androidx.compose.material3.IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.Rounded.ArrowBackIosNew,
+                        contentDescription = "Back",
+                        tint = Ivory,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            } else {
+                androidx.compose.foundation.layout.Spacer(Modifier.size(16.dp))
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = Ivory,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(start = 4.dp)
+            )
+            actions()
+        }
+    }
+}
+
+/** Text fields: gold hairline, gold when focused, a whisper of raised surface behind. */
+@Composable
+fun rollFieldColors(): androidx.compose.material3.TextFieldColors =
+    androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = Gold,
+        unfocusedBorderColor = Gold.copy(alpha = 0.35f),
+        focusedLabelColor = Gold,
+        unfocusedLabelColor = Muted,
+        cursorColor = Gold,
+        focusedTextColor = Ivory,
+        unfocusedTextColor = Ivory,
+        focusedPlaceholderColor = Muted,
+        unfocusedPlaceholderColor = Muted,
+        focusedSupportingTextColor = Muted,
+        unfocusedSupportingTextColor = Muted,
+        focusedContainerColor = com.rollapp.shared.ui.theme.Raised.copy(alpha = 0.6f),
+        unfocusedContainerColor = com.rollapp.shared.ui.theme.Raised.copy(alpha = 0.4f)
+    )

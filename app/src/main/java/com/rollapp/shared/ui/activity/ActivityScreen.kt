@@ -42,6 +42,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import com.rollapp.shared.ui.components.RollTopBar
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.components.Readout
+import com.rollapp.shared.ui.theme.Gold
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.height
 
 @HiltViewModel
 class ActivityViewModel @Inject constructor(
@@ -60,7 +66,8 @@ fun ActivityScreen(
     val events by viewModel.events.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Activity") }) }
+        containerColor = Ink,
+        topBar = { RollTopBar(title = "Activity", onBack = null) }
     ) { padding ->
         if (events.isEmpty()) {
             EmptyState(
@@ -89,7 +96,7 @@ private fun ActivityRow(event: ActivityEvent, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         UserAvatar(
@@ -105,11 +112,8 @@ private fun ActivityRow(event: ActivityEvent, onClick: () -> Unit) {
                 text = describe(event),
                 style = MaterialTheme.typography.bodyLarge
             )
-            Text(
-                text = TimeFormat.relative(event.createdAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Spacer(Modifier.height(3.dp))
+            Readout(text = TimeFormat.relative(event.createdAt))
         }
 
         if (!event.previewPhotoUrl.isNullOrBlank()) {
@@ -121,6 +125,7 @@ private fun ActivityRow(event: ActivityEvent, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(46.dp)
                     .clip(MaterialTheme.shapes.small)
+                    .border(1.dp, Gold.copy(alpha = 0.4f), MaterialTheme.shapes.small)
             )
         }
     }

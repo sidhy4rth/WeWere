@@ -1,6 +1,9 @@
-# Roll
+# WeWere
 
-**A shared camera roll for a group of friends.**
+**One shared camera roll for the people you were with.**
+
+*(Formerly "Roll" — the package ID `com.rollapp.shared` and the internal class names
+keep the old name; only what the user sees changed.)*
 
 One group, one private collection. Anyone in it can shoot straight from the app or
 add from their gallery, and everyone else sees the photo within seconds. Built for
@@ -111,7 +114,7 @@ token to Supabase and Supabase verifies it directly.
    one near your users). Wait for it to finish provisioning.
 2. **Authentication → Sign In / Providers → Third-party auth → Add provider →
    Firebase**, and enter your Firebase **project ID** (Firebase console → Project
-   settings → General). This is what lets Supabase trust Roll's sign-in.
+   settings → General). This is what lets Supabase trust WeWere's sign-in.
 3. **SQL Editor → New query**, paste the whole of `supabase/storage-policies.sql`,
    change `roll-3a292` in it to your Firebase project ID, **Run**. This creates the
    private `roll` bucket and its access policies. Read the comment at the top of that
@@ -151,7 +154,7 @@ cd functions && npm install && cd ..
 firebase deploy --only functions
 ```
 
-This adds push notifications. Everything else in Roll runs on the **free Spark plan**
+This adds push notifications. Everything else in WeWere runs on the **free Spark plan**
 (plus Supabase's free tier); if you skip this step the only thing you lose is
 notifications.
 
@@ -319,7 +322,7 @@ comments, expiring groups, QR joining.
 
 There is **no read-storage permission**. Every gallery entry point uses the system
 Photo Picker, which hands over exactly the images you selected. Declaring
-`READ_MEDIA_IMAGES` would give Roll your entire library in order to read four photos.
+`READ_MEDIA_IMAGES` would give WeWere your entire library in order to read four photos.
 
 ## Known gaps
 

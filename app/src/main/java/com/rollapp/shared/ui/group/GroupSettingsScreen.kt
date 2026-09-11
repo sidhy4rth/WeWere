@@ -51,6 +51,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rollapp.shared.ui.components.InlineError
 import com.rollapp.shared.ui.components.Sharing
+import com.rollapp.shared.ui.components.RollTopBar
+import com.rollapp.shared.ui.components.rollFieldColors
+import com.rollapp.shared.ui.theme.Ink
 
 @Composable
 fun GroupSettingsScreen(
@@ -85,6 +88,7 @@ fun GroupSettingsScreen(
             text = {
                 Column {
                     OutlinedTextField(
+                        colors = rollFieldColors(),
                         value = nameDraft,
                         onValueChange = { nameDraft = it },
                         singleLine = true,
@@ -92,6 +96,7 @@ fun GroupSettingsScreen(
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
+                        colors = rollFieldColors(),
                         value = descriptionDraft,
                         onValueChange = { descriptionDraft = it },
                         label = { Text("Description") },
@@ -153,15 +158,9 @@ fun GroupSettingsScreen(
     }
 
     Scaffold(
+        containerColor = Ink,
         topBar = {
-            TopAppBar(
-                title = { Text("Group settings") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            RollTopBar(title = "Group settings", onBack = onBack)
         }
     ) { padding ->
         Column(

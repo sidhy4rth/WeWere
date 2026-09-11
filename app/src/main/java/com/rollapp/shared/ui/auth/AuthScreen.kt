@@ -28,13 +28,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,12 +61,12 @@ import com.rollapp.shared.ui.components.InlineError
 import com.rollapp.shared.ui.components.PrintStack
 import com.rollapp.shared.ui.components.QuietButton
 import com.rollapp.shared.ui.components.RiseIn
+import com.rollapp.shared.ui.components.rollFieldColors
 import com.rollapp.shared.ui.theme.Gold
 import com.rollapp.shared.ui.theme.Ink
 import com.rollapp.shared.ui.theme.Ivory
 import com.rollapp.shared.ui.theme.IvoryMuted
 import com.rollapp.shared.ui.theme.Muted
-import com.rollapp.shared.ui.theme.Raised
 
 @Composable
 fun AuthScreen(
@@ -221,7 +219,7 @@ private fun EmailForm(
                 label = { Text("Your name") },
                 singleLine = true,
                 shape = MaterialTheme.shapes.large,
-                colors = fieldColors(),
+                colors = rollFieldColors(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -233,7 +231,7 @@ private fun EmailForm(
             label = { Text("Email") },
             singleLine = true,
             shape = MaterialTheme.shapes.large,
-            colors = fieldColors(),
+            colors = rollFieldColors(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -247,7 +245,7 @@ private fun EmailForm(
             label = { Text("Password") },
             singleLine = true,
             shape = MaterialTheme.shapes.large,
-            colors = fieldColors(),
+            colors = rollFieldColors(),
             visualTransformation = if (passwordVisible) VisualTransformation.None
             else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
@@ -311,16 +309,3 @@ private fun EmailForm(
         }
     }
 }
-
-@Composable
-private fun fieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = Gold,
-    unfocusedBorderColor = Gold.copy(alpha = 0.35f),
-    focusedLabelColor = Gold,
-    unfocusedLabelColor = Muted,
-    cursorColor = Gold,
-    focusedTextColor = Ivory,
-    unfocusedTextColor = Ivory,
-    focusedContainerColor = Raised.copy(alpha = 0.6f),
-    unfocusedContainerColor = Raised.copy(alpha = 0.4f)
-)

@@ -98,7 +98,7 @@ fun ScanQrScreen(
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Roll needs the camera to read a group's QR code. Nothing is " +
+                    text = "WeWere needs the camera to read a roll's QR code. Nothing is " +
                         "recorded — it only looks for a code.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.75f),

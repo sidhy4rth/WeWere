@@ -53,6 +53,11 @@ import com.rollapp.shared.core.Limits
 import com.rollapp.shared.ui.components.InlineError
 import com.rollapp.shared.ui.components.QrCode
 import com.rollapp.shared.ui.components.Sharing
+import com.rollapp.shared.ui.components.RollTopBar
+import com.rollapp.shared.ui.components.rollFieldColors
+import com.rollapp.shared.ui.theme.Ink
+import androidx.compose.foundation.border
+import com.rollapp.shared.ui.components.GoldButton
 
 @Composable
 fun CreateGroupScreen(
@@ -123,15 +128,9 @@ fun CreateGroupScreen(
     }
 
     Scaffold(
+        containerColor = Ink,
         topBar = {
-            TopAppBar(
-                title = { Text("New group") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            RollTopBar(title = "New roll", onBack = onBack)
         }
     ) { padding ->
         Column(
@@ -148,6 +147,7 @@ fun CreateGroupScreen(
                     .aspectRatio(16f / 9f)
                     .clip(MaterialTheme.shapes.large)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(1.dp, com.rollapp.shared.ui.theme.Gold.copy(alpha = 0.35f), MaterialTheme.shapes.large)
                     .clickable {
                         coverPicker.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -189,9 +189,10 @@ fun CreateGroupScreen(
             Spacer(Modifier.height(24.dp))
 
             OutlinedTextField(
+                colors = rollFieldColors(),
                 value = state.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Group name") },
+                label = { Text("Roll name") },
                 placeholder = { Text("Goa Trip 2026") },
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium,
@@ -204,6 +205,7 @@ fun CreateGroupScreen(
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
+                colors = rollFieldColors(),
                 value = state.description,
                 onValueChange = viewModel::onDescriptionChange,
                 label = { Text("Description") },
@@ -224,24 +226,12 @@ fun CreateGroupScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            Button(
-                onClick = viewModel::create,
-                enabled = state.canCreate,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            ) {
-                if (state.isCreating) {
-                    CircularProgressIndicator(
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("Create group", style = MaterialTheme.typography.labelLarge)
-                }
-            }
+            GoldButton(
+    text = "Create roll",
+    onClick = viewModel::create,
+    enabled = state.canCreate,
+    loading = state.isCreating
+)
 
             Spacer(Modifier.height(32.dp))
         }

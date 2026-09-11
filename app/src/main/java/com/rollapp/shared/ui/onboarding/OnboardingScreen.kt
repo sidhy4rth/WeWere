@@ -37,6 +37,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.border
+import com.rollapp.shared.ui.components.GoldButton
+import com.rollapp.shared.ui.components.Hairline
+import com.rollapp.shared.ui.theme.Gold
+import com.rollapp.shared.ui.theme.Raised
 
 private data class OnboardingPage(
     val icon: ImageVector,
@@ -101,22 +106,25 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     modifier = Modifier
                         .size(112.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                        .border(1.dp, Gold.copy(alpha = 0.6f), CircleShape)
+                        .background(Raised),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = page.icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(48.dp)
+                        tint = Gold,
+                        modifier = Modifier.size(44.dp)
                     )
                 }
                 Spacer(Modifier.height(36.dp))
                 Text(
                     text = page.title,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineLarge,
                     textAlign = TextAlign.Center
                 )
+                Spacer(Modifier.height(12.dp))
+                Hairline(Modifier.width(120.dp))
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = page.body,
@@ -154,22 +162,14 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             }
         }
 
-        Button(
+        GoldButton(
+            text = if (isLast) "Get started" else "Next",
             onClick = {
                 if (isLast) onFinished()
                 else scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
             },
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 28.dp)
-                .height(52.dp)
-        ) {
-            Text(
-                text = if (isLast) "Get started" else "Next",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
+            modifier = Modifier.padding(horizontal = 28.dp)
+        )
 
         Spacer(Modifier.height(32.dp))
     }

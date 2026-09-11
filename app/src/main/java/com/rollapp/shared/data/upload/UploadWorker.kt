@@ -251,7 +251,7 @@ class UploadWorker @AssistedInject constructor(
 
             else -> when (t) {
                 is SecurityException ->
-                    UploadOutcome.Permanent("Roll lost access to that photo")
+                    UploadOutcome.Permanent("WeWere lost access to that photo")
                 is java.io.FileNotFoundException ->
                     UploadOutcome.Permanent("That photo is no longer on this device")
                 else ->

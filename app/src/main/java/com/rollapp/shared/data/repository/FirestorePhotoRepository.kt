@@ -336,14 +336,14 @@ class FirestorePhotoRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val bytes = imageStore.download(photo.storagePath, MAX_DOWNLOAD_BYTES)
 
-            val filename = "Roll_${photo.id}.jpg"
+            val filename = "WeWere_${photo.id}.jpg"
             val resolver = context.contentResolver
 
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, filename)
                 put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/Roll")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/WeWere")
                     put(MediaStore.Images.Media.IS_PENDING, 1)
                 }
             }
@@ -374,7 +374,7 @@ class FirestorePhotoRepository @Inject constructor(
             val bytes = imageStore.download(photo.storagePath, MAX_DOWNLOAD_BYTES)
 
             val dir = File(context.cacheDir, "shared").apply { mkdirs() }
-            val file = File(dir, "Roll_${photo.id}.jpg")
+            val file = File(dir, "WeWere_${photo.id}.jpg")
             file.writeBytes(bytes)
 
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)

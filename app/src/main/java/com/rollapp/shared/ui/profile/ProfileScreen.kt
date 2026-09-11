@@ -43,6 +43,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rollapp.shared.core.TimeFormat
 import com.rollapp.shared.ui.components.InlineError
 import com.rollapp.shared.ui.components.UserAvatar
+import com.rollapp.shared.ui.components.RollTopBar
+import com.rollapp.shared.ui.components.rollFieldColors
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.components.GoldButton
+import com.rollapp.shared.ui.components.Hairline
+import com.rollapp.shared.ui.components.Readout
+import com.rollapp.shared.ui.theme.Gold
 
 @Composable
 fun ProfileScreen(
@@ -70,6 +77,7 @@ fun ProfileScreen(
             title = { Text("Your name") },
             text = {
                 OutlinedTextField(
+                    colors = rollFieldColors(),
                     value = nameDraft,
                     onValueChange = { nameDraft = it },
                     singleLine = true,
@@ -116,7 +124,8 @@ fun ProfileScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("You") }) }
+        containerColor = Ink,
+        topBar = { RollTopBar(title = "You", onBack = null) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -145,6 +154,7 @@ fun ProfileScreen(
                         photoUrl = state.user?.photoUrl,
                         seed = state.user?.uid.orEmpty(),
                         size = 96.dp,
+                        borderColor = Gold,
                         modifier = Modifier.clickable {
                             photoPicker.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -159,7 +169,7 @@ fun ProfileScreen(
                 ) {
                     Text(
                         text = state.user?.name.orEmpty(),
-                        style = MaterialTheme.typography.headlineSmall
+                        style = MaterialTheme.typography.headlineMedium
                     )
                     Spacer(Modifier.width(6.dp))
                     Icon(
@@ -177,25 +187,17 @@ fun ProfileScreen(
                     )
                 }
                 state.user?.createdAt?.takeIf { it > 0 }?.let { created ->
-                    Text(
-                        text = "On Roll since ${TimeFormat.absoluteDate(created)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Spacer(Modifier.height(6.dp))
+                    Readout(text = "On WeWere since ${TimeFormat.absoluteDate(created)}", color = Gold)
                 }
             }
 
             if (state.user?.isAnonymous == true) {
-                OutlinedButton(
+                GoldButton(
+                    text = "Save your account",
                     onClick = { upgradingGuest = true },
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .height(52.dp)
-                ) {
-                    Text("Save your account")
-                }
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
                 Text(
                     text = "You're signed in as a guest. Add an email so you don't lose " +
                         "your groups if you change phones.",
@@ -205,11 +207,11 @@ fun ProfileScreen(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+            Hairline(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp))
 
-            Text(
+            Readout(
                 text = "Notifications",
-                style = MaterialTheme.typography.titleMedium,
+                color = Gold,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
             )
 
@@ -232,7 +234,7 @@ fun ProfileScreen(
                 onChange = { viewModel.updatePrefs(state.prefs.copy(memberJoined = it)) }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+            Hairline(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp))
 
             TextButton(
                 onClick = viewModel::signOut,
@@ -301,6 +303,7 @@ private fun GuestUpgradeDialog(
                 )
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
+                    colors = rollFieldColors(),
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Your name") },
@@ -309,6 +312,7 @@ private fun GuestUpgradeDialog(
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
+                    colors = rollFieldColors(),
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
@@ -317,6 +321,7 @@ private fun GuestUpgradeDialog(
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
+                    colors = rollFieldColors(),
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password") },

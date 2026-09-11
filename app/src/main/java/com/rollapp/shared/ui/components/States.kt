@@ -103,7 +103,7 @@ fun ErrorState(
 
 /** The second line: what the user should understand, not a restatement of the error. */
 private fun errorGuidance(error: AppError): String = when (error) {
-    AppError.Offline -> "Roll will catch up as soon as you're back on a network."
+    AppError.Offline -> "WeWere will catch up as soon as you're back on a network."
     AppError.Timeout -> "The connection is slow right now."
     AppError.PermissionDenied -> "Ask an admin to invite you again."
     AppError.GroupNotFound -> "It may have been deleted by an admin."

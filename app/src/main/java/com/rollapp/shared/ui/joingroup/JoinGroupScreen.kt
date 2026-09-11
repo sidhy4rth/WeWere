@@ -47,6 +47,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.rollapp.shared.ui.components.InlineError
+import com.rollapp.shared.ui.components.RollTopBar
+import com.rollapp.shared.ui.components.rollFieldColors
+import com.rollapp.shared.ui.theme.Ink
+import com.rollapp.shared.ui.components.HairlineButton
+import com.rollapp.shared.ui.components.GoldButton
 
 @Composable
 fun JoinGroupScreen(
@@ -62,15 +67,9 @@ fun JoinGroupScreen(
     }
 
     Scaffold(
+        containerColor = Ink,
         topBar = {
-            TopAppBar(
-                title = { Text("Join a group") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            RollTopBar(title = "Join a roll", onBack = onBack)
         }
     ) { padding ->
         Column(
@@ -87,7 +86,7 @@ fun JoinGroupScreen(
                 Spacer(Modifier.height(40.dp))
                 Text(
                     text = "Enter the invite code",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.height(8.dp))
@@ -101,6 +100,7 @@ fun JoinGroupScreen(
                 Spacer(Modifier.height(32.dp))
 
                 OutlinedTextField(
+                    colors = rollFieldColors(),
                     value = state.code,
                     onValueChange = viewModel::onCodeChange,
                     placeholder = {
@@ -118,7 +118,8 @@ fun JoinGroupScreen(
                         fontSize = 28.sp,
                         letterSpacing = 8.sp,
                         textAlign = TextAlign.Center,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        fontFamily = com.rollapp.shared.ui.theme.Mono,
+                        color = com.rollapp.shared.ui.theme.Gold
                     ),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Characters,
@@ -134,40 +135,20 @@ fun JoinGroupScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                OutlinedButton(
-                    onClick = onScanQr,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth().height(50.dp)
-                ) {
-                    Icon(
-                        Icons.Rounded.QrCodeScanner,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Scan their QR code")
-                }
+                HairlineButton(
+                    text = "Scan their QR code",
+                    icon = Icons.Rounded.QrCodeScanner,
+                    onClick = onScanQr
+                )
 
                 Spacer(Modifier.height(16.dp))
 
-                Button(
-                    onClick = viewModel::lookUp,
-                    enabled = state.canLookUp,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    if (state.isLookingUp) {
-                        CircularProgressIndicator(
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text("Find group", style = MaterialTheme.typography.labelLarge)
-                    }
-                }
+                GoldButton(
+    text = "Find roll",
+    onClick = viewModel::lookUp,
+    enabled = state.canLookUp,
+    loading = state.isLookingUp
+)
             } else {
                 Spacer(Modifier.height(28.dp))
 
@@ -206,7 +187,7 @@ fun JoinGroupScreen(
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = preview.name,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineLarge,
                     textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.height(8.dp))
@@ -234,29 +215,12 @@ fun JoinGroupScreen(
 
                 Spacer(Modifier.height(32.dp))
 
-                Button(
-                    onClick = {
-                        if (preview.alreadyMember) onJoined(preview.id) else viewModel.join()
-                    },
+                GoldButton(
+                    text = if (preview.alreadyMember) "Open roll" else "Join roll",
+                    onClick = { if (preview.alreadyMember) onJoined(preview.id) else viewModel.join() },
                     enabled = !state.isJoining,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    if (state.isJoining) {
-                        CircularProgressIndicator(
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text(
-                            text = if (preview.alreadyMember) "Open group" else "Join group",
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
+                    loading = state.isJoining
+                )
 
                 TextButton(onClick = viewModel::clearPreview) {
                     Text("Use a different code")
