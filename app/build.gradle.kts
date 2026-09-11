@@ -18,6 +18,14 @@ val localProps = Properties().apply {
 }
 val webClientId: String = localProps.getProperty("WEB_CLIENT_ID") ?: ""
 
+// Image bytes live in a Supabase Storage bucket (Firebase Storage needs the Blaze plan).
+// SUPABASE_URL and SUPABASE_ANON_KEY come from Supabase -> Project Settings -> API.
+// The anon key is a public identifier, not a secret; access is gated by the user's
+// Firebase ID token and the bucket policies in supabase/storage-policies.sql.
+val supabaseUrl: String = localProps.getProperty("SUPABASE_URL") ?: ""
+val supabaseAnonKey: String = localProps.getProperty("SUPABASE_ANON_KEY") ?: ""
+val supabaseBucket: String = localProps.getProperty("SUPABASE_BUCKET") ?: "roll"
+
 // Point a debug build at a local Firebase Emulator Suite instead of a real project.
 // Set USE_FIREBASE_EMULATOR=true in local.properties to try the app end to end
 // without creating a Firebase project at all.
@@ -42,6 +50,9 @@ android {
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
         buildConfigField("String", "INVITE_HOST", "\"roll.page.link\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        buildConfigField("String", "SUPABASE_BUCKET", "\"$supabaseBucket\"")
     }
 
     buildTypes {
@@ -116,7 +127,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
     implementation(libs.firebase.messaging)
 
     implementation(libs.hilt.android)
@@ -126,6 +136,7 @@ dependencies {
     ksp(libs.hilt.ext.compiler)
 
     implementation(libs.coil.compose)
+    implementation(libs.okhttp)
 
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)

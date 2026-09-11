@@ -6,7 +6,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.storage.StorageException
+import com.rollapp.shared.data.storage.ImageStoreException
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
@@ -39,14 +39,13 @@ object FirebaseErrorMapper {
             else -> AppError.Unknown(t.message)
         }
 
-        is StorageException -> when (t.errorCode) {
-            StorageException.ERROR_NOT_AUTHENTICATED -> AppError.NotAuthenticated
-            StorageException.ERROR_NOT_AUTHORIZED -> AppError.PermissionDenied
-            StorageException.ERROR_OBJECT_NOT_FOUND -> AppError.PhotoNotFound
-            StorageException.ERROR_QUOTA_EXCEEDED -> AppError.StorageQuotaExceeded
-            StorageException.ERROR_RETRY_LIMIT_EXCEEDED -> AppError.Offline
-            StorageException.ERROR_CANCELED -> AppError.UploadFailed
-            else -> AppError.UploadFailed
+        is ImageStoreException -> when (t.kind) {
+            ImageStoreException.Kind.NOT_AUTHENTICATED -> AppError.NotAuthenticated
+            ImageStoreException.Kind.NOT_AUTHORIZED -> AppError.PermissionDenied
+            ImageStoreException.Kind.NOT_FOUND -> AppError.PhotoNotFound
+            ImageStoreException.Kind.TOO_LARGE -> AppError.Validation("That image is too large")
+            ImageStoreException.Kind.QUOTA -> AppError.StorageQuotaExceeded
+            ImageStoreException.Kind.OTHER -> AppError.UploadFailed
         }
 
         is IOException -> AppError.Offline

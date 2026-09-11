@@ -14,8 +14,6 @@ import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
 import com.rollapp.shared.R
 import com.rollapp.shared.core.AppError
 import com.rollapp.shared.core.FirebaseErrorMapper
@@ -24,16 +22,14 @@ import com.rollapp.shared.core.Limits
 import com.rollapp.shared.core.StoragePaths
 import com.rollapp.shared.data.local.UploadDao
 import com.rollapp.shared.data.local.UploadEntity
+import com.rollapp.shared.data.storage.ImageStore
 import com.rollapp.shared.domain.model.UploadState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -52,7 +48,7 @@ class UploadWorker @AssistedInject constructor(
     private val dao: UploadDao,
     private val imageProcessor: ImageProcessor,
     private val firestore: FirebaseFirestore,
-    private val storage: FirebaseStorage,
+    private val imageStore: ImageStore,
     private val auth: FirebaseAuth
 ) : CoroutineWorker(appContext, params) {
 
@@ -121,37 +117,35 @@ class UploadWorker @AssistedInject constructor(
                 .collection(FirestorePaths.PHOTOS).document().id
                 .also { dao.setRemotePhotoId(item.id, it) }
 
-            val fullRef = storage.reference
-                .child(StoragePaths.GROUPS).child(item.groupId)
-                .child(StoragePaths.FULL).child("$photoId.jpg")
-            val thumbRef = storage.reference
-                .child(StoragePaths.GROUPS).child(item.groupId)
-                .child(StoragePaths.THUMBS).child("$photoId.jpg")
+            val fullPath = StoragePaths.photo(item.groupId, StoragePaths.FULL, photoId)
+            val thumbPath = StoragePaths.photo(item.groupId, StoragePaths.THUMBS, photoId)
 
             // Thumbnail first and it is small: the grid can render the moment the
             // document appears, even while the full image is still climbing.
-            coroutineScope {
+            val (thumbUrl, fullUrl) = coroutineScope {
+                // The progress callback fires on the HTTP thread, so it must never block
+                // or suspend. It hands the fraction to a conflated channel and a collector
+                // on the worker's own coroutine persists it — dropping intermediate values
+                // under load, which is exactly right for a progress bar.
                 val progress = Channel<Float>(Channel.CONFLATED)
                 val writer = launch {
                     for (fraction in progress) dao.setProgress(item.id, fraction)
                 }
                 try {
-                    thumbRef.putBytesAwaiting(processed.thumbnail.bytes) { fraction ->
+                    val thumb = imageStore.upload(thumbPath, processed.thumbnail.bytes) { fraction ->
                         progress.trySend(fraction * THUMB_SHARE)
                     }
-                    fullRef.putBytesAwaiting(processed.full.bytes) { fraction ->
+                    val full = imageStore.upload(fullPath, processed.full.bytes) { fraction ->
                         progress.trySend(THUMB_SHARE + fraction * (1f - THUMB_SHARE))
                     }
+                    thumb to full
                 } finally {
                     progress.close()
                     writer.join()
                 }
             }
 
-            val thumbUrl = thumbRef.downloadUrl.await().toString()
-            val fullUrl = fullRef.downloadUrl.await().toString()
-
-            writePhotoDocument(item, photoId, processed, fullRef, thumbRef, fullUrl, thumbUrl)
+            writePhotoDocument(item, photoId, processed, fullPath, thumbPath, fullUrl, thumbUrl)
 
             dao.setProgress(item.id, 1f)
             UploadOutcome.Success
@@ -166,8 +160,8 @@ class UploadWorker @AssistedInject constructor(
         item: UploadEntity,
         photoId: String,
         processed: ProcessedUpload,
-        fullRef: StorageReference,
-        thumbRef: StorageReference,
+        fullPath: String,
+        thumbPath: String,
         fullUrl: String,
         thumbUrl: String
     ) {
@@ -191,8 +185,8 @@ class UploadWorker @AssistedInject constructor(
                 "uploaderPhotoUrl" to uploaderPhoto,
                 "imageUrl" to fullUrl,
                 "thumbnailUrl" to thumbUrl,
-                "storagePath" to fullRef.path,
-                "thumbnailStoragePath" to thumbRef.path,
+                "storagePath" to fullPath,
+                "thumbnailStoragePath" to thumbPath,
                 "caption" to item.caption?.take(Limits.MAX_CAPTION_LENGTH),
                 "width" to processed.full.width,
                 "height" to processed.full.height,
@@ -322,30 +316,4 @@ class UploadWorker @AssistedInject constructor(
         /** The thumbnail is a small fraction of the bytes; weight the bar accordingly. */
         private const val THUMB_SHARE = 0.15f
     }
-}
-
-/**
- * `putBytes`, awaited, reporting progress through a plain callback.
- *
- * The progress listener fires on a Firebase thread, so it must never block or call a
- * suspend function. It hands the fraction to a conflated channel instead and a
- * collector on the worker's own coroutine persists it — dropping intermediate values
- * under load, which is exactly right for a progress bar.
- */
-private suspend fun StorageReference.putBytesAwaiting(
-    bytes: ByteArray,
-    onProgress: (Float) -> Unit
-): Unit = suspendCancellableCoroutine { continuation ->
-    val task = putBytes(bytes)
-
-    task.addOnProgressListener { snapshot ->
-        val total = snapshot.totalByteCount
-        if (total > 0) {
-            onProgress((snapshot.bytesTransferred.toFloat() / total).coerceIn(0f, 1f))
-        }
-    }
-    task.addOnSuccessListener { if (continuation.isActive) continuation.resume(Unit) }
-    task.addOnFailureListener { if (continuation.isActive) continuation.resumeWithException(it) }
-
-    continuation.invokeOnCancellation { task.cancel() }
 }

@@ -12,8 +12,6 @@ import com.google.firebase.firestore.PersistentCacheSettings
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.ktx.messaging
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.ktx.storage
 import com.rollapp.shared.BuildConfig
 import com.rollapp.shared.data.local.RollDatabase
 import com.rollapp.shared.data.local.UploadDao
@@ -22,7 +20,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -63,17 +60,6 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun provideStorage(): FirebaseStorage = Firebase.storage.apply {
-        if (BuildConfig.USE_FIREBASE_EMULATOR) {
-            useEmulator(BuildConfig.EMULATOR_HOST, STORAGE_EMULATOR_PORT)
-        }
-        maxUploadRetryTimeMillis = TimeUnit.MINUTES.toMillis(2)
-        maxDownloadRetryTimeMillis = TimeUnit.MINUTES.toMillis(2)
-        maxOperationRetryTimeMillis = TimeUnit.SECONDS.toMillis(30)
-    }
-
-    @Provides
-    @Singleton
     fun provideMessaging(): FirebaseMessaging = Firebase.messaging
 
     @Provides
@@ -89,5 +75,4 @@ object FirebaseModule {
     /** Defaults from `firebase.json`. 10.0.2.2 is the host loopback seen from an emulator. */
     private const val AUTH_EMULATOR_PORT = 9099
     private const val FIRESTORE_EMULATOR_PORT = 8080
-    private const val STORAGE_EMULATOR_PORT = 9199
 }

@@ -100,17 +100,40 @@ email/password and guest sign-in still work.
 near your users (`asia-south1` for India). Production mode denies everything until you
 push the rules in step 5 — that is intentional.
 
-### 4. Create Storage
+### 4. Create the image bucket (Supabase)
 
-**Storage → Get started**, same region. Note the bucket name.
+Firebase's own Cloud Storage has required the paid Blaze plan for new projects since
+October 2024, so image bytes go to a **Supabase Storage** bucket instead — 1 GB free,
+no card needed. Auth and Firestore stay on Firebase; the app sends its Firebase ID
+token to Supabase and Supabase verifies it directly.
 
-### 5. Deploy the rules and indexes
+1. [supabase.com](https://supabase.com) → **New project** (any name, any region — pick
+   one near your users). Wait for it to finish provisioning.
+2. **Authentication → Sign In / Providers → Third-party auth → Add provider →
+   Firebase**, and enter your Firebase **project ID** (Firebase console → Project
+   settings → General). This is what lets Supabase trust Roll's sign-in.
+3. **SQL Editor → New query**, paste the whole of `supabase/storage-policies.sql`,
+   change `roll-3a292` in it to your Firebase project ID, **Run**. This creates the
+   private `roll` bucket and its access policies. Read the comment at the top of that
+   file before editing anything else in it.
+4. **Project Settings → API**: copy the **Project URL** and the **anon public** key
+   into `local.properties`:
+
+   ```properties
+   SUPABASE_URL=https://xxxxxxxxxxxxxxxxxxxx.supabase.co
+   SUPABASE_ANON_KEY=eyJ...
+   ```
+
+   The anon key is public by design — it identifies the project, nothing more. Access
+   is gated by the user's Firebase token and the bucket policies.
+
+### 5. Deploy the Firestore rules and indexes
 
 ```bash
 npm install -g firebase-tools
 firebase login
 firebase use --add          # pick the project you just made
-firebase deploy --only firestore:rules,firestore:indexes,storage
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 **Do not skip this.** Until the rules are deployed the app cannot read or write
@@ -128,11 +151,9 @@ cd functions && npm install && cd ..
 firebase deploy --only functions
 ```
 
-This adds push notifications, membership custom claims (see the privacy note below),
-and server-side cleanup of deleted images.
-
-Everything else in Roll runs on the **free Spark plan**. If you skip this step you
-lose push notifications and stay on Tier 1 storage rules.
+This adds push notifications. Everything else in Roll runs on the **free Spark plan**
+(plus Supabase's free tier); if you skip this step the only thing you lose is
+notifications.
 
 ### 8. Build and run
 
@@ -196,32 +217,31 @@ Invite codes resolve through a separate `invites/{code}` collection that exposes
 a name and two counts, and listing that collection is denied outright — the code
 itself is the secret.
 
-**Storage is a weaker story, for a platform reason.** Cloud Storage security rules
-cannot query Firestore. There is no `exists()` available to them, so they physically
-cannot ask "is this user a member of this group". The rules ship in two tiers:
+**Image storage is a weaker story, for a platform reason.** Photo bytes live in a
+Supabase Storage bucket, and its policies cannot query Firestore — exactly as Firebase
+Storage rules could not. So the bucket cannot ask "is this user a member of this
+group". What it *does* enforce (`supabase/storage-policies.sql`):
 
-- **Tier 1 (active, works on Spark):** `allow read: if request.auth != null`. Object
-  names are 20-character Firestore auto-ids, clients are not granted listing, and the
-  only place a path is ever published is inside the membership-gated Firestore
-  document. Reaching another group's photo means already having been handed its exact
-  path.
-- **Tier 2 (stronger, needs Blaze):** deploy `functions/` and the
-  `syncMembershipClaims` function stamps each user's group list onto their auth token.
-  Then uncomment the `inGroupClaim(groupId)` line in `storage.rules` and delete the
-  Tier 1 line above it. Storage now enforces real membership.
+- Every read, upload and delete needs a valid **Firebase** ID token for this project.
+  A request with only the public anon key gets nothing.
+- Uploads may only land in `groups/{id}/{full|thumbs|covers}/…` or the caller's own
+  `avatars/{uid}.jpg`; the bucket caps objects at 15 MB and image MIME types.
+- Object names are 20-character Firestore auto-ids, clients are not granted listing,
+  and the only place a path is ever published is inside the membership-gated
+  Firestore document. Reaching another group's photo means already having been handed
+  its exact path.
 
-**The remaining caveat, in either tier:** photo documents store Firebase *download
-URLs*, which carry an access token in the query string. Anyone holding that full URL
-can fetch the image without signing in — that is how download URLs work, and it is
-what makes Coil caching and the Android share sheet straightforward. The URL only
-ever lives inside the membership-gated Firestore document, so it does not leak on its
-own, but it is not equivalent to server-enforced authorisation.
+**The remaining caveat:** photo documents store *signed URLs* (ten-year expiry) so
+Coil and the Android share sheet can fetch images without extra plumbing. Anyone
+holding that full URL can fetch the image without signing in — the same trade Firebase
+download URLs make. The URL only ever lives inside the membership-gated Firestore
+document, so it does not leak on its own, but it is not equivalent to server-enforced
+authorisation.
 
-To close that gap: stop calling `getDownloadUrl()` in `UploadWorker`, store only
+To close that gap: stop minting signed URLs in `SupabaseImageStore.upload`, store only
 `storagePath` (already on every photo document), and load images through a Coil
-fetcher backed by `StorageReference` so every fetch carries the user's credentials.
-That makes the Storage rules the real gate. It is maybe 60 lines and costs you the
-simplest path to sharing.
+fetcher that calls `ImageStore.download` so every fetch carries the user's token. It is
+maybe 60 lines and costs you the simplest path to sharing.
 
 **EXIF is stripped on upload.** `ImageProcessor` decodes, rotates and re-encodes every
 image, and `Bitmap.compress` writes no metadata — so GPS coordinates, device model and
@@ -276,7 +296,7 @@ A few decisions worth knowing about:
 
 **Phase 1 — complete.** Google / email / guest auth, create group, invite codes and
 links, join flow with preview, membership, CameraX capture, gallery multi-select,
-compression and EXIF stripping, Storage upload, shared feed, full-screen carousel with
+compression and EXIF stripping, resumable upload queue, shared feed, full-screen carousel with
 pinch/double-tap zoom and swipe-to-dismiss, uploader attribution, realtime sync,
 profile, delete your own photo.
 

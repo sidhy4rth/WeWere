@@ -1,36 +1,23 @@
 /**
  * Roll — Cloud Functions.
  *
- * Two jobs, both of which a client genuinely cannot do:
- *
- *   1. Push fan-out. Sending a notification needs every member's FCM token, and one
- *      member must never be able to read another's tokens. So the rules deny that
- *      read to clients and this runs with admin credentials instead.
- *
- *   2. Membership custom claims. Storage rules cannot query Firestore, so the only
- *      way to enforce "members of this group only" on the image bytes themselves is
- *      to stamp the group list onto the user's auth token. Only a trusted server can
- *      set claims. Deploying this is what upgrades storage.rules from Tier 1 to
- *      Tier 2 — see README.
+ * One job, which a client genuinely cannot do: push fan-out. Sending a notification
+ * needs every member's FCM token, and one member must never be able to read
+ * another's tokens. So the rules deny that read to clients and this runs with admin
+ * credentials instead.
  *
  * Cloud Functions requires the Blaze plan. Everything else in Roll works without it;
- * without this deployment you lose push notifications and stay on Tier 1 storage
- * rules.
+ * without this deployment you only lose push notifications.
  */
 
-const { onDocumentCreated, onDocumentDeleted, onDocumentWritten } =
-  require("firebase-functions/v2/firestore");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
-const { getAuth } = require("firebase-admin/auth");
 const logger = require("firebase-functions/logger");
 
 initializeApp();
 const db = getFirestore();
-
-/** Claims are capped: the auth token has a hard 1000-byte budget. */
-const MAX_CLAIM_GROUPS = 40;
 
 /**
  * Collects every device token for a group except the person who caused the event —
@@ -169,35 +156,6 @@ exports.onReactionCreated = onDocumentCreated(
   }
 );
 
-/**
- * Membership changes → rewrite that user's `groups` custom claim.
- *
- * The claim is what storage.rules Tier 2 reads. Note the client must refresh its ID
- * token before a new claim takes effect; Roll does this naturally because Firebase
- * refreshes tokens roughly hourly, and a freshly joined user is already authorised
- * through Firestore in the meantime.
- */
-exports.syncMembershipClaims = onDocumentWritten(
-  "groups/{groupId}/members/{userId}",
-  async (event) => {
-    const { userId } = event.params;
-
-    // The user's own membership pointers are the authoritative list — they are
-    // written in the same batch as the member document itself.
-    const pointers = await db.collection(`users/${userId}/memberships`).get();
-    const groups = pointers.docs
-      .map((d) => d.get("groupId") || d.id)
-      .slice(0, MAX_CLAIM_GROUPS);
-
-    try {
-      await getAuth().setCustomUserClaims(userId, { groups });
-      logger.info(`Claims updated for ${userId}: ${groups.length} groups`);
-    } catch (error) {
-      logger.error(`Failed to set claims for ${userId}`, error);
-    }
-  }
-);
-
 /** New member → tell the group someone arrived. */
 exports.onMemberJoined = onDocumentCreated(
   "groups/{groupId}/members/{userId}",
@@ -218,26 +176,5 @@ exports.onMemberJoined = onDocumentCreated(
       groupName: group.get("name") || "",
       actorName: member.name || "Someone",
     });
-  }
-);
-
-/**
- * Deleting a photo document should not leave its bytes behind. The client already
- * attempts this, but a client that dies mid-delete would orphan the blobs.
- */
-exports.onPhotoDeleted = onDocumentDeleted(
-  "groups/{groupId}/photos/{photoId}",
-  async (event) => {
-    const photo = event.data?.data();
-    if (!photo) return;
-
-    const { getStorage } = require("firebase-admin/storage");
-    const bucket = getStorage().bucket();
-
-    await Promise.all(
-      [photo.storagePath, photo.thumbnailStoragePath]
-        .filter(Boolean)
-        .map((path) => bucket.file(path).delete().catch(() => {}))
-    );
   }
 );

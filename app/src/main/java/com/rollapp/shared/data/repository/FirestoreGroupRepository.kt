@@ -5,13 +5,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
 import com.rollapp.shared.core.AppError
 import com.rollapp.shared.core.AppErrorException
 import com.rollapp.shared.core.FirestorePaths
 import com.rollapp.shared.core.Limits
 import com.rollapp.shared.core.Outcome
 import com.rollapp.shared.core.StoragePaths
+import com.rollapp.shared.data.storage.ImageStore
 import com.rollapp.shared.core.firebaseCall
 import com.rollapp.shared.data.remote.InviteCodes
 import com.rollapp.shared.data.remote.snapshots
@@ -43,7 +43,7 @@ import kotlinx.coroutines.tasks.await
 class FirestoreGroupRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage,
+    private val imageStore: ImageStore,
     private val imageProcessor: ImageProcessor
 ) : GroupRepository {
 
@@ -441,12 +441,7 @@ class FirestoreGroupRepository @Inject constructor(
 
     private suspend fun uploadCover(groupId: String, uri: Uri): String {
         val processed = imageProcessor.prepareCover(uri)
-        val ref = storage.reference
-            .child(StoragePaths.GROUPS).child(groupId)
-            .child(StoragePaths.COVERS).child("cover.jpg")
-
-        ref.putBytes(processed.bytes).await()
-        val url = ref.downloadUrl.await().toString()
+        val url = imageStore.upload(StoragePaths.cover(groupId), processed.bytes)
 
         group(groupId).update("coverPhotoUrl", url).await()
         runCatching {
@@ -540,12 +535,8 @@ class FirestoreGroupRepository @Inject constructor(
         val photoDocs = group(groupId).collection(FirestorePaths.PHOTOS).get().await().documents
 
         for (doc in photoDocs) {
-            doc.getString("storagePath")?.let { path ->
-                runCatching { storage.reference.child(path).delete().await() }
-            }
-            doc.getString("thumbnailStoragePath")?.let { path ->
-                runCatching { storage.reference.child(path).delete().await() }
-            }
+            doc.getString("storagePath")?.let { path -> runCatching { imageStore.delete(path) } }
+            doc.getString("thumbnailStoragePath")?.let { path -> runCatching { imageStore.delete(path) } }
         }
 
         val memberDocs = members(groupId).get().await().documents
@@ -577,7 +568,7 @@ class FirestoreGroupRepository @Inject constructor(
             batch.commit().await()
         }
 
-        runCatching { storage.reference.child(StoragePaths.GROUPS).child(groupId).child("covers/cover.jpg").delete().await() }
+        runCatching { imageStore.delete(StoragePaths.cover(groupId)) }
     }
 
     /** Re-runs every downstream query when the signed-in user changes. */

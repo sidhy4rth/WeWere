@@ -12,12 +12,23 @@ object FirestorePaths {
     const val DEVICES = "devices"
 }
 
+/**
+ * Object paths inside the image bucket. Bucket-relative, no leading slash; the
+ * layout is mirrored by the policies in `supabase/storage-policies.sql`.
+ */
 object StoragePaths {
     const val GROUPS = "groups"
     const val FULL = "full"
     const val THUMBS = "thumbs"
     const val COVERS = "covers"
     const val AVATARS = "avatars"
+
+    fun photo(groupId: String, category: String, photoId: String) =
+        "$GROUPS/$groupId/$category/$photoId.jpg"
+
+    fun cover(groupId: String) = "$GROUPS/$groupId/$COVERS/cover.jpg"
+
+    fun avatar(uid: String) = "$AVATARS/$uid.jpg"
 }
 
 object Limits {

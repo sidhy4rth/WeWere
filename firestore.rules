@@ -67,11 +67,6 @@ service cloud.firestore {
                .hasOnly([request.auth.uid]);
     }
 
-    function holdsValidInvite(groupId) {
-      return signedIn()
-        && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode));
-    }
-
     // ------------------------------------------------------------------ users
 
     match /users/{userId} {

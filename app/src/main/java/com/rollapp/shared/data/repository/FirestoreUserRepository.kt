@@ -6,11 +6,11 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
 import com.rollapp.shared.core.AppError
 import com.rollapp.shared.core.FirestorePaths
 import com.rollapp.shared.core.Outcome
 import com.rollapp.shared.core.StoragePaths
+import com.rollapp.shared.data.storage.ImageStore
 import com.rollapp.shared.core.firebaseCall
 import com.rollapp.shared.data.remote.snapshots
 import com.rollapp.shared.data.remote.toUser
@@ -33,7 +33,7 @@ import kotlinx.coroutines.tasks.await
 class FirestoreUserRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage,
+    private val imageStore: ImageStore,
     private val imageProcessor: ImageProcessor
 ) : UserRepository {
 
@@ -66,9 +66,7 @@ class FirestoreUserRepository @Inject constructor(
 
         return firebaseCall {
             val processed = imageProcessor.prepareAvatar(uri)
-            val ref = storage.reference.child(StoragePaths.AVATARS).child("${user.uid}.jpg")
-            ref.putBytes(processed.bytes).await()
-            val url = ref.downloadUrl.await().toString()
+            val url = imageStore.upload(StoragePaths.avatar(user.uid), processed.bytes)
 
             user.updateProfile(
                 UserProfileChangeRequest.Builder().setPhotoUri(Uri.parse(url)).build()

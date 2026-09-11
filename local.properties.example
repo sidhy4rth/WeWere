@@ -8,3 +8,10 @@ sdk.dir=/Users/YOU/Library/Android/sdk
 #   -> Web SDK configuration -> Web client ID
 # Leave blank to build without Google Sign-In; email/password and guest still work.
 WEB_CLIENT_ID=
+
+# Supabase -> Project Settings -> API. Image bytes live in a Supabase Storage bucket
+# because Firebase Storage needs the Blaze plan. The anon key is public by design.
+SUPABASE_URL=https://xxxxxxxxxxxxxxxxxxxx.supabase.co
+SUPABASE_ANON_KEY=
+# Bucket name created by supabase/storage-policies.sql. Only change if you renamed it there.
+SUPABASE_BUCKET=roll

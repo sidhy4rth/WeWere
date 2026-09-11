@@ -11,7 +11,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
 import com.rollapp.shared.core.AppError
 import com.rollapp.shared.core.AppErrorException
 import com.rollapp.shared.core.FirestorePaths
@@ -19,6 +18,7 @@ import com.rollapp.shared.core.Limits
 import com.rollapp.shared.core.Outcome
 import com.rollapp.shared.core.firebaseCall
 import com.rollapp.shared.data.local.UploadDao
+import com.rollapp.shared.data.storage.ImageStore
 import com.rollapp.shared.data.local.UploadEntity
 import com.rollapp.shared.data.remote.snapshots
 import com.rollapp.shared.data.remote.str
@@ -52,7 +52,7 @@ class FirestorePhotoRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage,
+    private val imageStore: ImageStore,
     private val uploadDao: UploadDao,
     private val uploadScheduler: UploadScheduler
 ) : PhotoRepository {
@@ -215,12 +215,8 @@ class FirestorePhotoRepository @Inject constructor(
 
             // Blobs first: a photo document pointing at a missing image renders as a
             // broken tile, while an orphaned blob is invisible and merely wasteful.
-            doc.getString("storagePath")?.let {
-                runCatching { storage.reference.child(it).delete().await() }
-            }
-            doc.getString("thumbnailStoragePath")?.let {
-                runCatching { storage.reference.child(it).delete().await() }
-            }
+            doc.getString("storagePath")?.let { runCatching { imageStore.delete(it) } }
+            doc.getString("thumbnailStoragePath")?.let { runCatching { imageStore.delete(it) } }
 
             val batch = firestore.batch()
             batch.delete(photos(groupId).document(photoId))
@@ -338,8 +334,7 @@ class FirestorePhotoRepository @Inject constructor(
 
     override suspend fun downloadToGallery(photo: Photo): Outcome<Uri> = firebaseCall {
         withContext(Dispatchers.IO) {
-            val bytes = storage.reference.child(photo.storagePath)
-                .getBytes(MAX_DOWNLOAD_BYTES).await()
+            val bytes = imageStore.download(photo.storagePath, MAX_DOWNLOAD_BYTES)
 
             val filename = "Roll_${photo.id}.jpg"
             val resolver = context.contentResolver
@@ -376,8 +371,7 @@ class FirestorePhotoRepository @Inject constructor(
 
     override suspend fun prepareForSharing(photo: Photo): Outcome<Uri> = firebaseCall {
         withContext(Dispatchers.IO) {
-            val bytes = storage.reference.child(photo.storagePath)
-                .getBytes(MAX_DOWNLOAD_BYTES).await()
+            val bytes = imageStore.download(photo.storagePath, MAX_DOWNLOAD_BYTES)
 
             val dir = File(context.cacheDir, "shared").apply { mkdirs() }
             val file = File(dir, "Roll_${photo.id}.jpg")
