@@ -28,7 +28,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -42,6 +46,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +63,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,7 +84,7 @@ import com.rollapp.shared.ui.components.UserAvatar
 import com.rollapp.shared.ui.theme.PhotoScrimBottom
 import com.rollapp.shared.ui.theme.PhotoScrimTop
 import kotlin.math.abs
-import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -107,6 +113,7 @@ fun CarouselScreen(
         null
     }
     var pendingDownload by remember { mutableStateOf<Photo?>(null) }
+    var slideshowRunning by remember { mutableStateOf(viewModel.startsInSlideshow) }
 
     fun requestDownload(photo: Photo) {
         if (writePermission == null || writePermission.status.isGranted) {
@@ -141,6 +148,37 @@ fun CarouselScreen(
     LaunchedEffect(state.photos.isNotEmpty()) {
         if (state.photos.isNotEmpty() && startIndex > 0 && pagerState.currentPage == 0) {
             pagerState.scrollToPage(startIndex)
+        }
+    }
+
+    /**
+     * Autoplay. Keeping the screen awake while it runs is the point — a slideshow
+     * that blanks after thirty seconds is worse than no slideshow, and this is the
+     * one moment the phone is deliberately propped up and not being touched.
+     */
+    val view = LocalView.current
+    DisposableEffect(slideshowRunning) {
+        view.keepScreenOn = slideshowRunning
+        onDispose { view.keepScreenOn = false }
+    }
+
+    LaunchedEffect(slideshowRunning, state.photos.size) {
+        if (!slideshowRunning || state.photos.isEmpty()) return@LaunchedEffect
+        controlsVisible = false
+        while (true) {
+            delay(SLIDE_INTERVAL_MS)
+            val next = pagerState.currentPage + 1
+            if (next >= state.photos.size) {
+                // Stop at the end rather than looping; a loop hides that it finished.
+                if (!state.hasMoreToLoad) {
+                    slideshowRunning = false
+                    controlsVisible = true
+                    break
+                }
+                viewModel.loadOlder()
+            } else {
+                pagerState.animateScrollToPage(next)
+            }
         }
     }
 
@@ -231,7 +269,14 @@ fun CarouselScreen(
             val photo = state.photos.getOrNull(page) ?: return@HorizontalPager
 
             ZoomableImage(
-                onTap = { controlsVisible = !controlsVisible },
+                onTap = {
+                    if (slideshowRunning) {
+                        slideshowRunning = false
+                        controlsVisible = true
+                    } else {
+                        controlsVisible = !controlsVisible
+                    }
+                },
                 onZoomChanged = { isZoomed = it }
             ) { imageModifier ->
                 val painter = rememberAsyncImagePainter(
@@ -277,6 +322,13 @@ fun CarouselScreen(
                     photo = photo,
                     canDelete = viewModel.canDelete(photo),
                     canEditCaption = photo.uploadedBy == state.myUid,
+                    isFavorite = photo.isFavoritedBy(state.myUid),
+                    isSlideshowRunning = slideshowRunning,
+                    onToggleFavorite = { viewModel.toggleFavorite(photo) },
+                    onToggleSlideshow = {
+                        slideshowRunning = !slideshowRunning
+                        if (slideshowRunning) controlsVisible = false
+                    },
                     onClose = onClose,
                     onDownload = { requestDownload(photo) },
                     onShare = { viewModel.share(photo) },
@@ -317,6 +369,10 @@ private fun TopControls(
     photo: Photo,
     canDelete: Boolean,
     canEditCaption: Boolean,
+    isFavorite: Boolean,
+    isSlideshowRunning: Boolean,
+    onToggleFavorite: () -> Unit,
+    onToggleSlideshow: () -> Unit,
     onClose: () -> Unit,
     onDownload: () -> Unit,
     onShare: () -> Unit,
@@ -338,6 +394,20 @@ private fun TopControls(
             Icon(Icons.Rounded.ArrowBack, contentDescription = "Close", tint = Color.White)
         }
         Spacer(Modifier.weight(1f))
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                contentDescription = if (isFavorite) "Remove star" else "Star this photo",
+                tint = if (isFavorite) Color(0xFFFFC94D) else Color.White
+            )
+        }
+        IconButton(onClick = onToggleSlideshow) {
+            Icon(
+                imageVector = if (isSlideshowRunning) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                contentDescription = if (isSlideshowRunning) "Pause slideshow" else "Play slideshow",
+                tint = Color.White
+            )
+        }
         IconButton(onClick = onDownload) {
             Icon(Icons.Rounded.Download, contentDescription = "Save to device", tint = Color.White)
         }
@@ -480,3 +550,6 @@ private fun CaptionDialog(
 
 /** How far the photo must be dragged before letting go closes the viewer. */
 private const val DISMISS_THRESHOLD_PX = 320f
+
+/** Long enough to actually look at a photo, short enough to hold a room's attention. */
+private const val SLIDE_INTERVAL_MS = 3_500L

@@ -20,12 +20,29 @@ data class Photo(
     val capturedAt: Long? = null,
     val reactionCounts: Map<String, Int> = emptyMap(),
     /** Reaction this device's user has left, resolved separately. */
-    val myReaction: String? = null
+    val myReaction: String? = null,
+    /**
+     * Who has starred this photo. An array on the photo rather than a subcollection,
+     * because "show me my favourites" then becomes a single indexed
+     * array-contains query instead of a read per photo. Bounded by group size.
+     */
+    val favoritedBy: List<String> = emptyList()
 ) {
     val aspectRatio: Float
         get() = if (width > 0 && height > 0) width.toFloat() / height.toFloat() else 1f
 
     val totalReactions: Int get() = reactionCounts.values.sum()
+
+    fun isFavoritedBy(uid: String?): Boolean = uid != null && uid in favoritedBy
+}
+
+/** What the group feed is currently showing. */
+sealed interface PhotoFilter {
+    data object All : PhotoFilter
+    data object Favorites : PhotoFilter
+    data class ByUploader(val uid: String, val name: String) : PhotoFilter
+
+    val isActive: Boolean get() = this !is All
 }
 
 /** The fixed reaction set. Deliberately small — this is not a social network. */

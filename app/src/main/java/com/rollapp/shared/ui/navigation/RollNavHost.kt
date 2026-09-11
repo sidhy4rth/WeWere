@@ -43,7 +43,10 @@ import com.rollapp.shared.ui.creategroup.CreateGroupScreen
 import com.rollapp.shared.ui.group.GroupScreen
 import com.rollapp.shared.ui.group.GroupSettingsScreen
 import com.rollapp.shared.ui.home.HomeScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rollapp.shared.ui.joingroup.JoinGroupScreen
+import com.rollapp.shared.ui.joingroup.JoinGroupViewModel
+import com.rollapp.shared.ui.joingroup.ScanQrScreen
 import com.rollapp.shared.ui.members.MembersScreen
 import com.rollapp.shared.ui.onboarding.OnboardingScreen
 import com.rollapp.shared.ui.profile.ProfileScreen
@@ -205,12 +208,40 @@ fun RollNavHost(
                     }
                 )
             ) {
+                val joinViewModel: JoinGroupViewModel = hiltViewModel(it)
+
+                // The scanner pops back with the code in its own saved state, which
+                // survives the scanner screen being destroyed on the way out.
+                val scanned = it.savedStateHandle
+                    .getStateFlow<String?>(NavArgs.CODE, null)
+                    .collectAsStateWithLifecycle()
+
+                androidx.compose.runtime.LaunchedEffect(scanned.value) {
+                    scanned.value?.let { code ->
+                        joinViewModel.onCodeScanned(code)
+                        it.savedStateHandle[NavArgs.CODE] = null
+                    }
+                }
+
                 JoinGroupScreen(
                     onBack = navController::popBackStack,
+                    onScanQr = { navController.navigate(Routes.SCAN_QR) },
                     onJoined = { groupId ->
                         navController.navigate(Routes.group(groupId)) {
                             popUpTo(Routes.HOME)
                         }
+                    },
+                    viewModel = joinViewModel
+                )
+            }
+
+            composable(Routes.SCAN_QR) {
+                ScanQrScreen(
+                    onClose = navController::popBackStack,
+                    onCodeScanned = { code ->
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle?.set(NavArgs.CODE, code)
+                        navController.popBackStack()
                     }
                 )
             }
@@ -222,8 +253,11 @@ fun RollNavHost(
                 GroupScreen(
                     onBack = navController::popBackStack,
                     onOpenCamera = { navController.navigate(Routes.camera(it)) },
-                    onOpenPhoto = { groupId, photoId ->
-                        navController.navigate(Routes.carousel(groupId, photoId))
+                    onOpenPhoto = { groupId, photoId, filter ->
+                        navController.navigate(Routes.carousel(groupId, photoId, filter))
+                    },
+                    onOpenSlideshow = { groupId, filter ->
+                        navController.navigate(Routes.slideshow(groupId, filter))
                     },
                     onOpenSettings = { navController.navigate(Routes.groupSettings(it)) },
                     onOpenMembers = { navController.navigate(Routes.members(it)) }
@@ -258,6 +292,14 @@ fun RollNavHost(
                         type = NavType.StringType
                         nullable = true
                         defaultValue = null
+                    },
+                    navArgument(NavArgs.FILTER) {
+                        type = NavType.StringType
+                        defaultValue = "all"
+                    },
+                    navArgument(NavArgs.SLIDESHOW) {
+                        type = NavType.StringType
+                        defaultValue = "false"
                     }
                 ),
                 // The viewer rises over the grid; a horizontal push would fight the

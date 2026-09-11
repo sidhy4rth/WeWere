@@ -26,6 +26,7 @@ import com.rollapp.shared.data.remote.toPhoto
 import com.rollapp.shared.data.upload.UploadScheduler
 import com.rollapp.shared.domain.model.MemberRole
 import com.rollapp.shared.domain.model.Photo
+import com.rollapp.shared.domain.model.PhotoFilter
 import com.rollapp.shared.domain.model.Reaction
 import com.rollapp.shared.domain.model.UploadState
 import com.rollapp.shared.domain.repository.PhotoPage
@@ -75,10 +76,9 @@ class FirestorePhotoRepository @Inject constructor(
         firestore.collection(FirestorePaths.GROUPS).document(groupId)
             .collection(FirestorePaths.PHOTOS)
 
-    override fun observePhotos(groupId: String): Flow<PhotoPage> =
+    override fun observePhotos(groupId: String, filter: PhotoFilter): Flow<PhotoPage> =
         windowFor(groupId).flatMapLatest { limit ->
-            photos(groupId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+            baseQuery(groupId, filter)
                 .limit(limit.toLong())
                 .snapshots()
                 .map { snap ->
@@ -92,6 +92,33 @@ class FirestorePhotoRepository @Inject constructor(
         }.catch { throwable ->
             if (throwable is Exception) emit(PhotoPage()) else throw throwable
         }
+
+    /**
+     * Filters run as real queries rather than a client-side pass over the loaded
+     * window — otherwise "only Priya's photos" would show whichever of hers happened
+     * to fall in the last 60 uploads, and paging would appear to do nothing.
+     */
+    private fun baseQuery(groupId: String, filter: PhotoFilter): Query {
+        val uid = auth.currentUser?.uid
+        return when (filter) {
+            PhotoFilter.All ->
+                photos(groupId).orderBy("createdAt", Query.Direction.DESCENDING)
+
+            is PhotoFilter.ByUploader ->
+                photos(groupId)
+                    .whereEqualTo("uploadedBy", filter.uid)
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+
+            PhotoFilter.Favorites ->
+                if (uid == null) {
+                    photos(groupId).orderBy("createdAt", Query.Direction.DESCENDING)
+                } else {
+                    photos(groupId)
+                        .whereArrayContains("favoritedBy", uid)
+                        .orderBy("createdAt", Query.Direction.DESCENDING)
+                }
+        }
+    }
 
     override suspend fun loadOlder(groupId: String) {
         val flow = windowFor(groupId)
@@ -253,6 +280,60 @@ class FirestorePhotoRepository @Inject constructor(
                 null
             }.await()
         }
+    }
+
+    /**
+     * Starring writes only this user's id into the array. The rules verify the diff
+     * touches nobody else's, so one member cannot star a photo on another's behalf
+     * or wipe the list while they are at it.
+     */
+    override suspend fun setFavorite(groupId: String, photoId: String, favorite: Boolean): Outcome<Unit> {
+        val uid = auth.currentUser?.uid ?: return Outcome.Failure(AppError.NotAuthenticated)
+        return firebaseCall {
+            photos(groupId).document(photoId).update(
+                "favoritedBy",
+                if (favorite) FieldValue.arrayUnion(uid) else FieldValue.arrayRemove(uid)
+            ).await()
+        }
+    }
+
+    override suspend fun downloadAllToGallery(
+        photos: List<Photo>,
+        onProgress: (Int, Int) -> Unit
+    ): Outcome<Int> {
+        if (photos.isEmpty()) return Outcome.Success(0)
+
+        var saved = 0
+        var lastError: AppError? = null
+
+        photos.forEachIndexed { index, photo ->
+            when (val outcome = downloadToGallery(photo)) {
+                is Outcome.Success -> saved++
+                // One unreadable photo should not abandon the other twenty-nine.
+                is Outcome.Failure -> lastError = outcome.error
+            }
+            onProgress(index + 1, photos.size)
+        }
+
+        return if (saved == 0 && lastError != null) Outcome.Failure(lastError!!)
+        else Outcome.Success(saved)
+    }
+
+    override suspend fun deletePhotos(groupId: String, photoIds: List<String>): Outcome<Int> {
+        if (photoIds.isEmpty()) return Outcome.Success(0)
+
+        var removed = 0
+        var lastError: AppError? = null
+
+        for (id in photoIds) {
+            when (val outcome = deletePhoto(groupId, id)) {
+                is Outcome.Success -> removed++
+                is Outcome.Failure -> lastError = outcome.error
+            }
+        }
+
+        return if (removed == 0 && lastError != null) Outcome.Failure(lastError!!)
+        else Outcome.Success(removed)
     }
 
     override suspend fun downloadToGallery(photo: Photo): Outcome<Uri> = firebaseCall {

@@ -137,7 +137,8 @@ fun DocumentSnapshot.toPhoto(groupId: String): Photo? {
         sizeBytes = long("sizeBytes"),
         createdAt = millis("createdAt"),
         capturedAt = millisOrNull("capturedAt"),
-        reactionCounts = intMap("reactionCounts")
+        reactionCounts = intMap("reactionCounts"),
+        favoritedBy = stringList("favoritedBy")
     )
 }
 

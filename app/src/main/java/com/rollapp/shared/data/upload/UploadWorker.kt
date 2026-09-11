@@ -203,7 +203,8 @@ class UploadWorker @AssistedInject constructor(
                 "capturedAt" to com.google.firebase.Timestamp(
                     java.util.Date(processed.capturedAt ?: item.capturedAt)
                 ),
-                "reactionCounts" to emptyMap<String, Int>()
+                "reactionCounts" to emptyMap<String, Int>(),
+                "favoritedBy" to emptyList<String>()
             )
         )
 

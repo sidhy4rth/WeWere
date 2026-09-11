@@ -3,6 +3,7 @@ package com.rollapp.shared.domain.repository
 import android.net.Uri
 import com.rollapp.shared.core.Outcome
 import com.rollapp.shared.domain.model.Photo
+import com.rollapp.shared.domain.model.PhotoFilter
 import com.rollapp.shared.domain.model.Reaction
 import kotlinx.coroutines.flow.Flow
 
@@ -15,10 +16,11 @@ data class PhotoPage(
 
 interface PhotoRepository {
     /**
-     * Live, paginated feed. The newest [pageSize] photos arrive over a realtime
-     * listener; calling [loadOlder] extends the same window backwards.
+     * Live, paginated feed. The newest page arrives over a realtime listener;
+     * [loadOlder] extends the same window backwards. [filter] is applied server-side
+     * so paging still works when only one person's photos are showing.
      */
-    fun observePhotos(groupId: String): Flow<PhotoPage>
+    fun observePhotos(groupId: String, filter: PhotoFilter = PhotoFilter.All): Flow<PhotoPage>
     suspend fun loadOlder(groupId: String)
     fun resetPagination(groupId: String)
 
@@ -38,6 +40,21 @@ interface PhotoRepository {
 
     /** Copies the image to cache and returns a FileProvider uri for the share sheet. */
     suspend fun prepareForSharing(photo: Photo): Outcome<Uri>
+
+    /** Stars or unstars a photo for the signed-in user only. */
+    suspend fun setFavorite(groupId: String, photoId: String, favorite: Boolean): Outcome<Unit>
+
+    /**
+     * Saves many photos at once, reporting progress as it goes. Returns how many
+     * landed — a partial success is still worth telling the user about.
+     */
+    suspend fun downloadAllToGallery(
+        photos: List<Photo>,
+        onProgress: (done: Int, total: Int) -> Unit = { _, _ -> }
+    ): Outcome<Int>
+
+    /** Deletes several photos, skipping any the user has no right to remove. */
+    suspend fun deletePhotos(groupId: String, photoIds: List<String>): Outcome<Int>
 
     suspend fun reportPhoto(groupId: String, photoId: String, reason: String): Outcome<Unit>
 }

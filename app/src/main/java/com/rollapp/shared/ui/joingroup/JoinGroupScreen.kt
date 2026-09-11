@@ -13,15 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,6 +52,7 @@ import com.rollapp.shared.ui.components.InlineError
 fun JoinGroupScreen(
     onBack: () -> Unit,
     onJoined: (String) -> Unit,
+    onScanQr: () -> Unit,
     viewModel: JoinGroupViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -128,7 +132,23 @@ fun JoinGroupScreen(
                     InlineError(message = error.message ?: "That code didn't work")
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedButton(
+                    onClick = onScanQr,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.QrCodeScanner,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Scan their QR code")
+                }
+
+                Spacer(Modifier.height(16.dp))
 
                 Button(
                     onClick = viewModel::lookUp,

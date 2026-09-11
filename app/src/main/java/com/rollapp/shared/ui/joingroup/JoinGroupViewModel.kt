@@ -56,6 +56,12 @@ class JoinGroupViewModel @Inject constructor(
         _state.update { it.copy(code = normalised, error = null, preview = null) }
     }
 
+    /** A scanned code skips the keyboard entirely and goes straight to the preview. */
+    fun onCodeScanned(code: String) {
+        _state.update { it.copy(code = InviteCodes.normalise(code), error = null, preview = null) }
+        lookUp()
+    }
+
     fun dismissError() = _state.update { it.copy(error = null) }
     fun clearPreview() = _state.update { it.copy(preview = null) }
 

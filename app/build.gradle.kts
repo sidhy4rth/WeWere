@@ -120,6 +120,8 @@ dependencies {
     implementation(libs.camerax.view)
     implementation(libs.concurrent.futures.ktx)
     implementation(libs.guava)
+    implementation(libs.zxing.core)
+    implementation(libs.mlkit.barcode)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

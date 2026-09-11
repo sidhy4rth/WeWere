@@ -7,6 +7,8 @@ import com.rollapp.shared.core.AppError
 import com.rollapp.shared.core.Outcome
 import com.rollapp.shared.domain.model.MemberRole
 import com.rollapp.shared.domain.model.Photo
+import com.rollapp.shared.domain.model.PhotoFilter
+import com.rollapp.shared.domain.model.PhotoFilterCodec
 import com.rollapp.shared.domain.model.Reaction
 import com.rollapp.shared.domain.repository.AuthRepository
 import com.rollapp.shared.domain.repository.GroupRepository
@@ -31,7 +33,8 @@ data class CarouselUiState(
     val photos: List<Photo> = emptyList(),
     val myUid: String? = null,
     val isAdmin: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val hasMoreToLoad: Boolean = false
 )
 
 sealed interface CarouselEvent {
@@ -52,7 +55,15 @@ class CarouselViewModel @Inject constructor(
 ) : ViewModel() {
 
     val groupId: String = checkNotNull(savedStateHandle[NavArgs.GROUP_ID])
-    val initialPhotoId: String? = savedStateHandle[NavArgs.PHOTO_ID]
+    val initialPhotoId: String? =
+        savedStateHandle.get<String>(NavArgs.PHOTO_ID)?.takeIf { it.isNotBlank() }
+
+    /** The grid's filter, so page N here is the photo the user tapped at position N. */
+    private val filter: PhotoFilter =
+        PhotoFilterCodec.decode(savedStateHandle[NavArgs.FILTER])
+
+    val startsInSlideshow: Boolean =
+        savedStateHandle.get<String>(NavArgs.SLIDESHOW)?.toBoolean() ?: false
 
     private val _events = MutableStateFlow<CarouselEvent?>(null)
     val events: StateFlow<CarouselEvent?> = _events.asStateFlow()
@@ -60,7 +71,7 @@ class CarouselViewModel @Inject constructor(
     private val currentPhotoId = MutableStateFlow(initialPhotoId)
 
     val state: StateFlow<CarouselUiState> = combine(
-        photoRepository.observePhotos(groupId),
+        photoRepository.observePhotos(groupId, filter),
         groupRepository.observeMembership(groupId)
     ) { page, membership ->
         CarouselUiState(
@@ -68,7 +79,8 @@ class CarouselViewModel @Inject constructor(
             photos = buildTimeline.orderedPhotos(page.photos),
             myUid = authRepository.currentUid(),
             isAdmin = membership?.role == MemberRole.ADMIN,
-            isLoading = false
+            isLoading = false,
+            hasMoreToLoad = page.hasMore
         )
     }.stateIn(
         scope = viewModelScope,
@@ -133,6 +145,16 @@ class CarouselViewModel @Inject constructor(
                 is Outcome.Success -> CarouselEvent.ShareReady(outcome.data, photo.caption)
                 is Outcome.Failure -> CarouselEvent.Failed(outcome.error)
             }
+        }
+    }
+
+    fun toggleFavorite(photo: Photo) {
+        viewModelScope.launch {
+            photoRepository.setFavorite(
+                groupId = groupId,
+                photoId = photo.id,
+                favorite = !photo.isFavoritedBy(state.value.myUid)
+            )
         }
     }
 

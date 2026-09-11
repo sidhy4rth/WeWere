@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rollapp.shared.domain.model.Member
 import com.rollapp.shared.ui.components.InlineError
+import com.rollapp.shared.ui.components.QrCode
 import com.rollapp.shared.ui.components.Sharing
 import com.rollapp.shared.ui.components.UserAvatar
 
@@ -108,6 +109,26 @@ fun MembersScreen(
             }
 
             state.group?.takeIf { it.isInviteActive }?.let { group ->
+                item(key = "invite-qr") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Someone across the table scans this instead of typing.
+                        QrCode(content = group.inviteLink, size = 180.dp)
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = group.inviteCode,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Scan this, or type the code",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 item(key = "invite") {
                     OutlinedButton(
                         onClick = {

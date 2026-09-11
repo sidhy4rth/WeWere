@@ -15,7 +15,7 @@ import {
 import { readFileSync } from "node:fs";
 import {
   doc, setDoc, getDoc, deleteDoc, updateDoc, writeBatch,
-  collection, getDocs, serverTimestamp, increment, arrayUnion,
+  collection, getDocs, serverTimestamp, increment, arrayUnion, arrayRemove,
 } from "firebase/firestore";
 
 const PROJECT = "roll-rules-test";
@@ -251,7 +251,7 @@ async function seedTwoMembers() {
     });
     await setDoc(doc(db, `groups/${GROUP}/photos/p1`), {
       uploadedBy: BOB, uploaderName: "bob", imageUrl: "u", createdAt: new Date(),
-      caption: null, reactionCounts: {},
+      caption: null, reactionCounts: {}, favoritedBy: [],
     });
   });
 }
@@ -325,6 +325,69 @@ await test("reactions are one per person and only your own", async () => {
   }));
   await assertFails(setDoc(doc(bob(), `groups/${GROUP}/photos/p1/reactions/${ALICE}`), {
     key: "heart", createdAt: serverTimestamp(),
+  }));
+});
+
+// ------------------------------------------------------------------ favourites
+
+console.log("\nstarring");
+
+await test("a member can star a photo for themselves", async () => {
+  await seedTwoMembers();
+  await assertSucceeds(updateDoc(doc(alice(), `groups/${GROUP}/photos/p1`), {
+    favoritedBy: arrayUnion(ALICE),
+  }));
+});
+
+await test("a member can remove their own star", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}/photos/p1`), {
+      favoritedBy: [ALICE, BOB],
+    });
+  });
+  await assertSucceeds(updateDoc(doc(alice(), `groups/${GROUP}/photos/p1`), {
+    favoritedBy: arrayRemove(ALICE),
+  }));
+});
+
+/** The reason favouriting lives on a shared array rather than a subcollection. */
+await test("a member cannot star on someone else's behalf", async () => {
+  await seedTwoMembers();
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}/photos/p1`), {
+    favoritedBy: arrayUnion(BOB),
+  }));
+});
+
+await test("a member cannot wipe everyone else's stars", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}/photos/p1`), {
+      favoritedBy: [BOB, MALLORY],
+    });
+  });
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}/photos/p1`), {
+    favoritedBy: [ALICE],
+  }));
+});
+
+await test("starring cannot smuggle in another field", async () => {
+  await seedTwoMembers();
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}/photos/p1`), {
+    favoritedBy: arrayUnion(ALICE),
+    imageUrl: "http://evil/x.jpg",
+  }));
+});
+
+await test("a non-member cannot star anything", async () => {
+  await seedGroup();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), `groups/${GROUP}/photos/p1`), {
+      uploadedBy: ALICE, imageUrl: "u", createdAt: new Date(), favoritedBy: [],
+    });
+  });
+  await assertFails(updateDoc(doc(bob(), `groups/${GROUP}/photos/p1`), {
+    favoritedBy: arrayUnion(BOB),
   }));
 });
 

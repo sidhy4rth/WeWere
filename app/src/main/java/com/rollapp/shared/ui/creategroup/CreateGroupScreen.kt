@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.rollapp.shared.core.Limits
 import com.rollapp.shared.ui.components.InlineError
+import com.rollapp.shared.ui.components.QrCode
 import com.rollapp.shared.ui.components.Sharing
 
 @Composable
@@ -74,10 +75,12 @@ fun CreateGroupScreen(
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Share this code and your friends can join straight away.",
+                        text = "Hold this up and your friends can scan it, or send them the code.",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(16.dp))
+                    QrCode(content = group.inviteLink, size = 170.dp)
+                    Spacer(Modifier.height(16.dp))
                     Box(
                         modifier = Modifier
                             .clip(MaterialTheme.shapes.medium)

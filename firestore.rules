@@ -50,6 +50,23 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    /**
+     * True when a write to `favoritedBy` adds or removes nothing but the caller's own
+     * id. Starring lives on the photo document so that "my starred photos" is one
+     * indexed query, which means every member can write to a shared field — this is
+     * what stops one member clearing everyone else's stars while setting their own.
+     *
+     * get(..., []) keeps it working for photos written before the field existed.
+     */
+    function favoritesDiffIsOnlyMine() {
+      return request.resource.data.get('favoritedBy', []).toSet()
+               .difference(resource.data.get('favoritedBy', []).toSet())
+               .hasOnly([request.auth.uid])
+        && resource.data.get('favoritedBy', []).toSet()
+               .difference(request.resource.data.get('favoritedBy', []).toSet())
+               .hasOnly([request.auth.uid]);
+    }
+
     function holdsValidInvite(groupId) {
       return signedIn()
         && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode));
@@ -179,7 +196,11 @@ service cloud.firestore {
             && isMember(groupId)
             && changedKeys().hasOnly(['caption']))
           // Anyone in the group may move a reaction counter.
-          || (isMember(groupId) && changedKeys().hasOnly(['reactionCounts']));
+          || (isMember(groupId) && changedKeys().hasOnly(['reactionCounts']))
+          // ...and star it, but only on their own behalf.
+          || (isMember(groupId)
+              && changedKeys().hasOnly(['favoritedBy'])
+              && favoritesDiffIsOnlyMine());
 
         // Your own photo, or an admin clearing something inappropriate.
         allow delete: if isMember(groupId)

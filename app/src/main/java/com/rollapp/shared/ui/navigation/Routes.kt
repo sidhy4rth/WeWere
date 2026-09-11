@@ -37,9 +37,16 @@ object Routes {
     fun members(groupId: String) = "$MEMBERS_BASE/${groupId.encode()}"
 
     private const val CAROUSEL_BASE = "carousel"
-    const val CAROUSEL = "$CAROUSEL_BASE/{groupId}?photoId={photoId}"
-    fun carousel(groupId: String, photoId: String) =
-        "$CAROUSEL_BASE/${groupId.encode()}?photoId=${photoId.encode()}"
+    const val CAROUSEL =
+        "$CAROUSEL_BASE/{groupId}?photoId={photoId}&filter={filter}&slideshow={slideshow}"
+
+    fun carousel(groupId: String, photoId: String, filter: String = "all") =
+        "$CAROUSEL_BASE/${groupId.encode()}?photoId=${photoId.encode()}" +
+            "&filter=${filter.encode()}&slideshow=false"
+
+    /** Same screen, opened at the top of the roll with autoplay already running. */
+    fun slideshow(groupId: String, filter: String = "all") =
+        "$CAROUSEL_BASE/${groupId.encode()}?photoId=&filter=${filter.encode()}&slideshow=true"
 
     private const val CAMERA_BASE = "camera"
     const val CAMERA = "$CAMERA_BASE/{groupId}"
@@ -49,6 +56,8 @@ object Routes {
     const val REVIEW = "$REVIEW_BASE/{groupId}?uri={uri}&capturedAt={capturedAt}"
     fun review(groupId: String, uri: String, capturedAt: Long) =
         "$REVIEW_BASE/${groupId.encode()}?uri=${uri.encode()}&capturedAt=$capturedAt"
+
+    const val SCAN_QR = "scan_qr"
 
     private const val GALLERY_REVIEW_BASE = "gallery_review"
     const val GALLERY_REVIEW = "$GALLERY_REVIEW_BASE/{groupId}"
@@ -63,4 +72,6 @@ object NavArgs {
     const val CODE = "code"
     const val URI = "uri"
     const val CAPTURED_AT = "capturedAt"
+    const val FILTER = "filter"
+    const val SLIDESHOW = "slideshow"
 }
