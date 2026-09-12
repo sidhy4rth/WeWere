@@ -17,7 +17,7 @@ data class Group(
     /** Denormalised avatars for the home card, so it renders without N extra reads. */
     val recentMemberPhotos: List<String> = emptyList()
 ) {
-    val inviteLink: String get() = "https://roll.app/join/$inviteCode"
+    val inviteLink: String get() = "https://$INVITE_HOST/join/$inviteCode"
 
     val isInviteActive: Boolean
         get() = inviteCode.isNotBlank() &&
@@ -55,3 +55,6 @@ data class GroupPreview(
     val photoCount: Int = 0,
     val alreadyMember: Boolean = false
 )
+
+/** The site that serves invite links; the manifest and assetlinks.json must agree. */
+const val INVITE_HOST = "wewere.vercel.app"

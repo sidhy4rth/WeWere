@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join a roll on WeWere</title>
+<meta name="description" content="You've been invited to a roll on WeWere. Open it in the app, or install WeWere first.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  :root { --ink: #0B0A08; --surface: #141210; --gold: #D4AF37; --gold-light: #E5C158; --gold-deep: #A8842A; --on-gold: #14110A; --ivory: #F3EDE0; --ivory-muted: #B9B0A0; --muted: #8E8578; --hair: rgba(212,175,55,0.35); color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(--ink); color: var(--ivory); font-family: 'Manrope', 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding-inline: 20px; padding-block: 0; -webkit-font-smoothing: antialiased; }
+  a { color: var(--gold); text-decoration: none; }
+  a:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 999px; }
+  .wordmark { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 500; font-size: 30px; color: var(--gold); padding-block: 26px; }
+  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 18px; width: 100%; max-width: 440px; padding-bottom: 56px; }
+  .readout { font-family: 'JetBrains Mono', Menlo, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(38px, 9vw, 52px); line-height: 1; margin: 0; text-wrap: balance; }
+  h1 em { font-style: italic; color: var(--gold); }
+  .code { font-family: 'JetBrains Mono', Menlo, monospace; font-size: 40px; letter-spacing: 0.32em; padding: 18px 8px 18px 20px; border: 1px solid var(--hair); border-radius: 18px; background: var(--surface); color: var(--gold); font-variant-numeric: tabular-nums; }
+  p { margin: 0; color: var(--ivory-muted); font-size: 15px; line-height: 1.55; max-width: 34ch; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 56px; border-radius: 999px; font-weight: 700; font-size: 16px; }
+  .gold { color: var(--on-gold); background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 55%, var(--gold-deep) 100%); box-shadow: 0 12px 32px rgba(212,175,55,0.22); }
+  .hair { color: var(--ivory); border: 1px solid var(--hair); }
+  .actions { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px; }
+  .fine { font-size: 13px; color: var(--muted); }
+  footer { padding-block: 24px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+  <a class="wordmark" href="/">WeWere</a>
+  <main>
+    <span class="readout">You're invited</span>
+    <h1>Join the roll with <em>this code.</em></h1>
+    <div class="code" id="code">······</div>
+    <p>Open WeWere, tap <strong>I have an invite code</strong>, and type it in. If the app is installed, the button below opens it straight to the roll.</p>
+    <div class="actions">
+      <a class="btn gold" id="open" href="/">Open in WeWere</a>
+      <a class="btn hair" href="/#install">Get WeWere for Android</a>
+    </div>
+    <span class="fine">The code is six characters — letters and numbers, no O or 0.</span>
+  </main>
+  <footer>Made with ❤️ by sidhY4rth</footer>
+  <script>
+    // /join/GA7X2M — the code is the last path segment. Anything that isn't a
+    // plausible code shows dots and sends people to the home page.
+    (function () {
+      var seg = location.pathname.replace(/\/+$/, '').split('/').pop() || '';
+      var code = seg.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      var el = document.getElementById('code'), open = document.getElementById('open');
+      if (code.length === 6) {
+        el.textContent = code;
+        open.href = 'roll://join/' + code;
+        document.title = 'Join with ' + code + ' · WeWere';
+      } else {
+        open.textContent = 'Open WeWere';
+        open.href = 'roll://join';
+      }
+    })();
+  </script>
+</body>
+</html>

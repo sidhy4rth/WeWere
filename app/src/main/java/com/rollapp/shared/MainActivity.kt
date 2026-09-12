@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Two link shapes arrive here: an invite (`https://roll.app/join/XXXXXX` or
+     * Two link shapes arrive here: an invite (`https://wewere.vercel.app/join/XXXXXX` or
      * `roll://join/XXXXXX`) and a notification tap (`roll://group/{groupId}`).
      */
     private fun handleInviteIntent(intent: Intent?) {

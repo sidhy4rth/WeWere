@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.rollapp.shared",
+      "sha256_cert_fingerprints": [
+        "9A:86:2E:03:84:C5:1D:C8:FB:57:F5:27:44:26:80:A0:55:48:A8:8C:8A:0F:DC:D7:E9:B6:EC:3A:FC:DA:DE:56",
+        "58:C0:64:A6:AC:A2:81:DD:04:97:FC:C0:6B:56:63:9E:7F:92:DE:CA:C9:31:84:4F:10:25:C4:B9:25:F8:9C:2C"
+      ]
+    }
+  }
+]

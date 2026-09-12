@@ -51,12 +51,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Invite links: https://roll.app/join/GA7X2M -->
+            <!-- Invite links: https://wewere.vercel.app/join/GA7X2M (verified via site/.well-known/assetlinks.json) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="roll.app" android:pathPrefix="/join" />
+                <data android:scheme="https" android:host="wewere.vercel.app" android:pathPrefix="/join" />
             </intent-filter>
 
             <!-- Custom scheme fallback so invites work with no web domain configured.

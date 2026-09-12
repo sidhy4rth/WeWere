@@ -49,7 +49,6 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
-        buildConfigField("String", "INVITE_HOST", "\"roll.page.link\"")
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
         buildConfigField("String", "SUPABASE_BUCKET", "\"$supabaseBucket\"")

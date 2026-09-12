@@ -31,7 +31,7 @@ object InviteCodes {
     fun isPlausible(code: String): Boolean =
         code.length == Limits.INVITE_CODE_LENGTH && code.all { it in ALPHABET }
 
-    /** Extracts the code from `https://roll.app/join/GA7X2M` or `roll://join/GA7X2M`. */
+    /** Extracts the code from `https://wewere.vercel.app/join/GA7X2M` or `roll://join/GA7X2M`. */
     fun fromLink(link: String): String? {
         val candidate = link.trim().trimEnd('/').substringAfterLast('/')
         return normalise(candidate).takeIf { isPlausible(it) }

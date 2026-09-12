@@ -14,14 +14,14 @@ object Sharing {
             append(groupName)
             append("\" photo group 📸\n\n")
             append(link)
-            append("\n\nOr enter the code in Roll: ")
+            append("\n\nOr enter the code in WeWere: ")
             append(code)
         }
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
-            putExtra(Intent.EXTRA_SUBJECT, "Join $groupName on Roll")
+            putExtra(Intent.EXTRA_SUBJECT, "Join $groupName on WeWere")
         }
         context.startActivity(Intent.createChooser(intent, "Invite friends"))
     }

@@ -25,3 +25,12 @@ each section, and rise in as they scroll into view. Each photo therefore appears
 in `index.html` (stack + `print-inline`) — keep captions in sync. Replace a photo by
 overwriting the file (JPEG, ~1300–1900 px wide, quality ~75) and redeploying. They're
 real people — only use shots your friends are happy to have on the open web.
+
+## Invite links
+
+Invites are `https://wewere.vercel.app/join/CODE`. `vercel.json` rewrites that path
+to `join.html`, which shows the code and an "Open in WeWere" button (`roll://join/CODE`).
+`.well-known/assetlinks.json` carries the app's release and debug certificate
+fingerprints so Android opens those links directly in the app once it's installed.
+If the signing key ever changes, regenerate it:
+`apksigner verify --print-certs app-release.apk` → SHA-256.
