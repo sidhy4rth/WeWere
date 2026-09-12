@@ -14,3 +14,10 @@ The APK is served from the same folder, so the download button is a relative lin
 
 `vercel.json` sets the APK's content type so phones treat it as an installable
 package. The APK itself is git-ignored in this folder.
+
+## Backdrop photos
+
+`photos/1.jpg` … `4.jpg` sit behind the page under a dark wash and crossfade as you
+scroll; each section's `data-bg` picks one. To swap a photo, replace the file (JPEG,
+~1300–1900 px wide, quality ~75) and redeploy. They're real people — only use shots
+your friends are happy to have on the open web.

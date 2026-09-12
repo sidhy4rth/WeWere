@@ -54,6 +54,29 @@
   h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
   p { margin: 0; max-width: 60ch; }
 
+  /* ---- Photo backdrop ----
+     The page is printed on the roll itself: your photos, under a wash of the page's
+     own black so they read as texture. Each section is tied to one photo and the
+     backdrop crossfades as you scroll. */
+  .backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--ink); }
+  .backdrop img {
+    position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover;
+    opacity: 0; filter: blur(1.5px) saturate(0.75) brightness(0.95);
+    transform: scale(1.02);
+    transition: opacity 1100ms ease;
+    will-change: opacity, transform;
+  }
+  .backdrop img.is-active { opacity: 1; animation: drift 18s ease-in-out infinite alternate; }
+  .backdrop::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(11,10,8,0.3) 0%, rgba(11,10,8,0.62) 55%, rgba(11,10,8,0.8) 100%),
+      linear-gradient(180deg, rgba(11,10,8,0.6) 0%, rgba(11,10,8,0.72) 100%);
+  }
+  .wrap { position: relative; z-index: 1; }
+  @keyframes drift { from { transform: scale(1.02) translate3d(0, 0, 0); } to { transform: scale(1.08) translate3d(-1.5%, 1%, 0); } }
+  @media (prefers-reduced-motion: reduce) { .backdrop img.is-active { animation: none; } }
+
   /* ---- Nav ---- */
   .nav {
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -197,6 +220,13 @@
 <body>
 
 
+<div class="backdrop" aria-hidden="true">
+  <img src="photos/1.jpg" alt="" class="is-active" data-bg="1" decoding="async">
+  <img src="photos/2.jpg" alt="" data-bg="2" loading="lazy" decoding="async">
+  <img src="photos/3.jpg" alt="" data-bg="3" loading="lazy" decoding="async">
+  <img src="photos/4.jpg" alt="" data-bg="4" loading="lazy" decoding="async">
+</div>
+
 <div class="wrap">
   <nav class="nav">
     <span class="wordmark">WeWere</span>
@@ -209,7 +239,7 @@
   </nav>
   <div class="hair"></div>
 
-  <header class="hero">
+  <header class="hero" data-bg="1">
     <div>
       <div class="readout rise">Android · Free · No ads, ever</div>
       <h1 class="rise d1" style="margin-top: 16px;">One shared camera roll for the people you <em>were with.</em></h1>
@@ -265,7 +295,7 @@
 
   <div class="hair"></div>
 
-  <section id="how">
+  <section id="how" data-bg="2">
     <div class="section-head">
       <span class="readout">How it works</span>
       <h2>Three things, in this order.</h2>
@@ -292,7 +322,7 @@
 
   <div class="hair"></div>
 
-  <section id="inside">
+  <section id="inside" data-bg="3">
     <div class="section-head">
       <span class="readout">What's inside</span>
       <h2>Small on purpose.</h2>
@@ -316,7 +346,7 @@
 
   <div class="hair"></div>
 
-  <section id="privacy">
+  <section id="privacy" data-bg="4">
     <div class="section-head">
       <span class="readout">Privacy</span>
       <h2>Private means the people in the roll.</h2>
@@ -336,7 +366,7 @@
 
   <div class="hair"></div>
 
-  <section id="install">
+  <section id="install" data-bg="2">
     <div class="section-head">
       <span class="readout">Install</span>
       <h2>Get it on your phone.</h2>
@@ -376,5 +406,30 @@
   </footer>
 </div>
 
+
+<script>
+  // The last tagged section whose top has crossed the middle of the screen owns
+  // the backdrop — no gaps between sections, no dependence on section height.
+  (function () {
+    var imgs = Array.prototype.slice.call(document.querySelectorAll('.backdrop img'));
+    var sections = Array.prototype.slice.call(document.querySelectorAll('[data-bg]:not(img)'));
+    if (!imgs.length || !sections.length) return;
+    var current = null, ticking = false;
+    function pick() {
+      ticking = false;
+      var mid = window.innerHeight * 0.5, id = sections[0].dataset.bg;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].getBoundingClientRect().top <= mid) id = sections[i].dataset.bg;
+      }
+      if (id === current) return;
+      current = id;
+      imgs.forEach(function (img) { img.classList.toggle('is-active', img.dataset.bg === id); });
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(pick); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    pick();
+  })();
+</script>
 </body>
 </html>
