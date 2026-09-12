@@ -1,5 +1,7 @@
 # WeWere landing page
 
+Live at **https://wewere.vercel.app** (Vercel project `wewere`, team `wi-fi-bandits`).
+
 `index.html` is the whole site — one file, fonts from Google Fonts, no build step.
 The APK is served from the same folder, so the download button is a relative link.
 
