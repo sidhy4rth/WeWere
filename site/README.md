@@ -15,12 +15,12 @@ The APK is served from the same folder, so the download button is a relative lin
 `vercel.json` sets the APK's content type so phones treat it as an installable
 package. The APK itself is git-ignored in this folder.
 
-## The film reel
+## The phone
 
-`photos/1.jpg` … `4.jpg` are the frames on the reel down the right-hand side. It is
-sticky and winds forward with the page — one frame per section — so the order of the
-`<figure class="frame">` blocks in `index.html` is the order they arrive. Each frame
-has a frame number and an italic caption; edit those in place. On phones the same
-frames become a horizontal strip under the hero. Replace a photo by overwriting the
-file (JPEG, ~1300–1900 px wide, quality ~75) and redeploying. They're real people —
-only use shots your friends are happy to have on the open web.
+The phone pinned on the right is the app drawn in HTML, running on `photos/1.jpg` …
+`4.jpg`. At the top of the page it shows the roll's grid; as each section scrolls into
+view a photo opens in the viewer (`.view` blocks in `index.html`, one per section).
+Captions, the roll name and the starred counts are plain text there — edit in place.
+Replace a photo by overwriting the file (JPEG, ~1300–1900 px wide, quality ~75) and
+redeploying. They're real people — only use shots your friends are happy to have on
+the open web.
