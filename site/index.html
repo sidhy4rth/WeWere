@@ -158,6 +158,8 @@
   .install { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
   .install ol { margin: 0; padding-left: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 14px; }
   .install li { display: grid; grid-template-columns: 32px 1fr; gap: 12px; color: var(--ivory-muted); font-size: 15px; }
+  .install li span { max-width: 60ch; }
+  .install li strong { color: var(--ivory); font-weight: 600; }
   .install li::before { counter-increment: s; content: counter(s, decimal-leading-zero); font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--gold); padding-top: 4px; }
   .install .card { padding: 26px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); display: flex; flex-direction: column; gap: 18px; }
   .install .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
@@ -358,10 +360,10 @@
         </div>
       </div>
       <ol>
-        <li>Tap <strong>Download WeWere.apk</strong>. Your browser may warn that this type of file can harm your device — that's the standard notice for any app installed outside the Play Store. Keep it.</li>
-        <li>Open the downloaded file. If Android says your browser isn't allowed to install apps, tap <strong>Settings</strong> and turn on <strong>Allow from this source</strong>, then go back.</li>
-        <li>Tap <strong>Install</strong>. Google Play Protect may offer to scan it first — that's fine.</li>
-        <li>Open WeWere, sign in with Google or email, and start a roll. Send the code to whoever you were with.</li>
+        <li><span>Tap <strong>Download WeWere.apk</strong>. Your browser may warn that this type of file can harm your device — that's the standard notice for any app installed outside the Play Store. Keep it.</span></li>
+        <li><span>Open the downloaded file. If Android says your browser isn't allowed to install apps, tap <strong>Settings</strong> and turn on <strong>Allow from this source</strong>, then go back.</span></li>
+        <li><span>Tap <strong>Install</strong>. Google Play Protect may offer to scan it first — that's fine.</span></li>
+        <li><span>Open WeWere, sign in with Google or email, and start a roll. Send the code to whoever you were with.</span></li>
       </ol>
     </div>
   </section>
