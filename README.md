@@ -2,45 +2,49 @@
 
 **One shared camera roll for the people you were with.**
 
-*(Formerly "Roll" — the package ID `com.rollapp.shared` and the internal class names
-keep the old name; only what the user sees changed.)*
+Start a roll for the trip, the wedding, the flat. Everyone in it shoots straight from
+the app or adds from their gallery, and everyone else sees the photo within seconds —
+so the week afterwards, nobody has to chase eight people for the good ones.
 
-One group, one private collection. Anyone in it can shoot straight from the app or
-add from their gallery, and everyone else sees the photo within seconds. Built for
-trips, parties, weddings and the week afterwards when nobody wants to chase eight
-people for the good photos.
+- **Website & download:** https://wewere.vercel.app
+- **Platform:** native Android (7.0+) — Kotlin, Jetpack Compose, Material 3, CameraX
+- **Backend:** Firebase Auth + Firestore (free Spark plan) and Supabase Storage for
+  the image bytes (free tier, no card) — see [Setup](#setup)
+- **Look:** black and gold. Cormorant Garamond for titles, Manrope for body,
+  JetBrains Mono for camera-style readouts. Film sprockets, gold hairlines, photos
+  that develop from blur.
 
-Native Android — Kotlin, Jetpack Compose, Material 3, CameraX, Firebase.
+*(The package ID `com.rollapp.shared` and the internal `Roll*` class names are from the
+app's earlier name; only what the user sees says WeWere.)*
+
+## Quick start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/roll.git
-cd roll
+git clone https://github.com/YOUR_USERNAME/wewere.git
+cd wewere
 cp app/google-services.json.example app/google-services.json   # compiles; talks to nothing
 cp local.properties.example local.properties                   # then set sdk.dir
 ./gradlew assembleDebug
 ```
 
 That gets you a building project. To make it *work* — real accounts, real photos, real
-sync — follow [Setup](#setup) and swap in your own Firebase project.
+sync — follow [Setup](#setup) and point it at your own Firebase and Supabase projects.
+Nothing in this repository contains credentials: `google-services.json`,
+`local.properties` and the release keystore are git-ignored on purpose.
 
 ---
 
 ## Status
 
-Verified on this machine:
-
 | Check | Result |
 |---|---|
-| `./gradlew assembleDebug` | passes — `app/build/outputs/apk/debug/app-debug.apk`, 25 MB |
+| `./gradlew assembleDebug` / `assembleRelease` | pass — release APK is 26 MB, signed, minified |
 | `./gradlew testDebugUnitTest` | **26 passed**, 0 failed |
-| `./gradlew lintDebug` | **0 errors**, 88 warnings (all "a newer version is available") |
-| Firestore rules suite (emulator) | **40 passed**, 0 failed |
+| `./gradlew lintDebug` | **0 errors** |
+| Firestore rules suite (emulator) | **46 passed**, 0 failed |
+| On a phone | sign-in, create roll, upload, view, star — verified on a OnePlus (Android 16) against the live backend |
 
-All four run in CI on every push — see `.github/workflows/android.yml`.
-
-It has **not been run against a live Firebase project or on a physical device** —
-that needs your own Firebase credentials, which is the setup below. Everything up to
-that point is done.
+The four automated checks run in CI on every push — see `.github/workflows/android.yml`.
 
 ---
 
@@ -173,7 +177,7 @@ Or just open the folder in Android Studio and press Run.
 
 ```bash
 ./gradlew testDebugUnitTest          # 26 tests: timeline sectioning, invite codes, time formatting
-cd rules-tests && npm install && npm test   # 40 tests: every rule, against the real emulator
+cd rules-tests && npm install && npm test   # 46 tests: every rule, against the real emulator
 ```
 
 The rules suite is the one worth keeping. It drives the **batched** commits the app
@@ -181,7 +185,7 @@ actually performs — creating a group and joining one both write four or five
 documents in a single commit — because Firestore evaluates each write in a batch
 against the state *before* the batch. Rules written with `exists()` look correct and
 deny both flows outright; the suite caught exactly that, and `existsAfter()` /
-`getAfter()` are why they now pass. Reverting those two helpers turns 40 green into
+`getAfter()` are why they now pass. Reverting those two helpers turns 46 green into
 38 green and 2 red.
 
 The unit tests cover the ordering trap in `BuildTimelineUseCase` (a photo uploaded
@@ -308,8 +312,12 @@ offline upload queue with retry and cancel, admin controls (rename, cover, remov
 member, regenerate/revoke invite, delete group), download to gallery, share sheet,
 activity feed.
 
-**Phase 3 — not built.** Shared albums, trip detection, AI highlights, memory videos,
-comments, expiring groups, QR joining.
+**Also built since:** QR joining (show a QR, scan a QR), starring and filtering by
+person, multi-select with bulk save and delete, slideshow, the black-and-gold redesign,
+the landing page with a direct APK download, and verified invite links.
+
+**Not built.** Shared albums, trip detection, AI highlights, memory videos, comments,
+expiring rolls.
 
 ## Permissions, and the ones deliberately absent
 
@@ -323,6 +331,19 @@ comments, expiring groups, QR joining.
 There is **no read-storage permission**. Every gallery entry point uses the system
 Photo Picker, which hands over exactly the images you selected. Declaring
 `READ_MEDIA_IMAGES` would give WeWere your entire library in order to read four photos.
+
+## Website and releases
+
+`site/` is the landing page — one HTML file plus the photos on it, hosted on Vercel at
+https://wewere.vercel.app next to the APK, so the download button is a plain link.
+`site/README.md` covers deploying, the invite-link page (`/join/CODE`) and the
+`assetlinks.json` that lets Android open invite links directly in the app.
+
+Release builds are signed from a keystore that is **not** in the repo. Generate your
+own once (`local.properties.example` has the command), keep it and its passwords
+safe, and add its SHA-1 to your Firebase Android app and its SHA-256 to
+`site/.well-known/assetlinks.json`. Bump `versionCode` in `app/build.gradle.kts` for
+every APK you publish.
 
 ## Known gaps
 
