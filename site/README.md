@@ -15,12 +15,13 @@ The APK is served from the same folder, so the download button is a relative lin
 `vercel.json` sets the APK's content type so phones treat it as an installable
 package. The APK itself is git-ignored in this folder.
 
-## The phone
+## The prints
 
-The phone pinned on the right is the app drawn in HTML, running on `photos/1.jpg` …
-`4.jpg`. At the top of the page it shows the roll's grid; as each section scrolls into
-view a photo opens in the viewer (`.view` blocks in `index.html`, one per section).
-Captions, the roll name and the starred counts are plain text there — edit in place.
-Replace a photo by overwriting the file (JPEG, ~1300–1900 px wide, quality ~75) and
-redeploying. They're real people — only use shots your friends are happy to have on
-the open web.
+`photos/1.jpg` … `4.jpg` are the prints stacked on the right — ivory borders, captions,
+date stamps, the same motif as the app's sign-in screen. The stack is pinned; each
+section you scroll into deals the top print off the table, and scrolling back returns
+it. Order and captions are the `<figure class="print">` blocks in `index.html` (they
+appear twice: once for the pinned stack, once for the swipeable row on phones — keep
+both in sync). Replace a photo by overwriting the file (JPEG, ~1300–1900 px wide,
+quality ~75) and redeploying. They're real people — only use shots your friends are
+happy to have on the open web.

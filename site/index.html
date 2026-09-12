@@ -54,74 +54,45 @@
   h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
   p { margin: 0; max-width: 60ch; }
 
-  /* ---- Page shell: copy on the left, the phone pinned on the right ---- */
-  .page { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 72px; align-items: start; }
+  /* ---- Page shell: copy on the left, the prints pinned on the right ---- */
+  .page { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 64px; align-items: start; }
   .content { min-width: 0; padding-bottom: 72px; }
-  .device-col { position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; }
+  .prints-col { position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; align-items: center; }
 
-  /* ---- The phone. Its screen is the app, running on your photos. ---- */
-  .phone {
-    height: min(760px, calc(100vh - 64px)); aspect-ratio: 390 / 800; max-width: 100%;
-    border-radius: 44px; padding: 11px;
-    background: linear-gradient(160deg, #2a2620, #0d0c0a);
-    box-shadow: 0 50px 100px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.08);
+  /* ---- The prints. Four of them on the table; scrolling deals the top one away. ---- */
+  .table { position: relative; width: 460px; height: 560px; }
+  .print {
+    position: absolute; left: 10px; top: 110px; width: 440px;
+    padding: 12px 12px 42px; border-radius: 4px; background: var(--ivory);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 2px 0 rgba(255,255,255,0.4) inset;
+    transform-origin: 50% 60%;
+    transition: transform 820ms cubic-bezier(.2,.8,.2,1), opacity 320ms ease, box-shadow 600ms ease;
+    will-change: transform, opacity;
   }
-  .screen { position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden; background: var(--ink); }
-  .screen > .view { position: absolute; inset: 0; opacity: 0; transition: opacity 700ms ease; }
-  .screen > .view.is-on { opacity: 1; }
+  .print img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 2px; background: var(--surface); }
+  .print.tall img { aspect-ratio: 4 / 3; }
+  .print .cap { position: absolute; left: 16px; bottom: 12px; font-family: var(--serif); font-style: italic; font-size: 19px; color: #4A4030; }
+  .print .stamp { position: absolute; right: 16px; bottom: 16px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; color: var(--gold-deep); }
+  /* slots, by distance from the top of the stack */
+  .print.s0 { z-index: 4; transform: rotate(-1.5deg); opacity: 1; box-shadow: 0 40px 80px rgba(0,0,0,0.65), 0 2px 0 rgba(255,255,255,0.4) inset; }
+  .print.s1 { z-index: 3; transform: translate(-58px, -80px) rotate(-9deg) scale(0.96); opacity: 0.96; }
+  .print.s2 { z-index: 2; transform: translate(70px, -140px) rotate(7deg) scale(0.92); opacity: 0.9; }
+  .print.s3 { z-index: 1; transform: translate(20px, -190px) rotate(2deg) scale(0.88); opacity: 0.8; }
+  /* dealt away: off the table, top-right, gone */
+  .print.gone { z-index: 5; transform: translate(260px, -520px) rotate(14deg) scale(0.9); opacity: 0; pointer-events: none; }
 
-  /* grid view: the roll */
-  .grid { padding: 40px 18px 0; display: flex; flex-direction: column; gap: 12px; }
-  .grid .top { display: flex; justify-content: space-between; align-items: center; color: var(--ivory); }
-  .grid .top svg { width: 18px; height: 18px; }
-  .grid .name { font-family: var(--serif); font-size: 30px; line-height: 1; font-weight: 600; }
-  .grid .sub { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-top: 6px; }
-  .grid .faces { display: flex; gap: 6px; }
-  .grid .faces span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: var(--on-gold); }
-  .grid .chips { display: flex; gap: 6px; }
-  .grid .chip { height: 26px; padding: 0 12px; border-radius: 999px; display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--ivory); border: 1px solid var(--hair); }
-  .grid .chip.on { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
-  .grid .day { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--ivory); margin-top: 4px; }
-  .grid .hero-tile { position: relative; aspect-ratio: 342 / 200; border-radius: 10px; overflow: hidden; background: var(--surface); }
-  .grid .hero-tile img, .grid .tiles img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .grid .hero-tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, rgba(11,10,8,0.85)); }
-  .grid .hero-tile .lbl { position: absolute; left: 12px; bottom: 10px; z-index: 1; font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ivory); display: flex; gap: 6px; align-items: center; }
-  .grid .hero-tile .lbl i { width: 10px; height: 10px; background: var(--gold); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-  .grid .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-  .grid .tiles div { position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: var(--surface); }
-  .grid .tiles .star { position: absolute; right: 5px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: rgba(11,10,8,0.7); display: grid; place-items: center; }
-  .grid .tiles .star i { width: 8px; height: 8px; background: var(--gold); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-  .grid .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(180deg, transparent, var(--ink) 60%); display: flex; align-items: center; justify-content: center; gap: 28px; padding-top: 30px; }
-  .grid .bar .ring { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(243,237,224,0.2); }
-  .grid .bar .shutter { width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--gold); display: grid; place-items: center; box-shadow: 0 0 0 0 rgba(212,175,55,0.45); animation: pulse 2.4s ease-out infinite; }
-  .grid .bar .shutter i { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg, var(--gold-light), var(--gold) 55%, var(--gold-deep)); }
-  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0.45); } 70% { box-shadow: 0 0 0 12px rgba(212,175,55,0); } }
-
-  /* viewer: one photo open */
-  .viewer { background: #000; }
-  .viewer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .viewer::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, transparent 22%, transparent 60%, rgba(0,0,0,0.92) 100%); }
-  .viewer .top { position: absolute; left: 14px; right: 14px; top: 40px; display: flex; align-items: center; justify-content: space-between; color: var(--ivory); }
-  .viewer .top svg { width: 18px; height: 18px; }
-  .viewer .by { display: flex; align-items: center; gap: 8px; }
-  .viewer .by .av { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--gold); background: #9AC6E8; color: var(--on-gold); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
-  .viewer .by b { display: block; font-size: 12px; font-weight: 600; }
-  .viewer .by small { display: block; font-family: var(--mono); font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ivory-muted); margin-top: 2px; }
-  .viewer .bottom { position: absolute; left: 20px; right: 20px; bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
-  .viewer .cap { font-family: var(--serif); font-style: italic; font-size: 20px; line-height: 1.15; color: var(--ivory); }
-  .viewer .starred { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
-  .viewer .acts { display: flex; justify-content: center; gap: 8px; }
-  .viewer .act { width: 52px; display: flex; flex-direction: column; align-items: center; gap: 5px; font-family: var(--mono); font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ivory-muted); }
-  .viewer .act i { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(243,237,224,0.2); display: grid; place-items: center; }
-  .viewer .act i svg { width: 16px; height: 16px; }
-  .viewer .act.star { color: var(--gold); }
-  .viewer .act.star i { border-color: var(--gold); background: rgba(212,175,55,0.14); }
-
+  /* narrow: prints become a row you can swipe */
+  .prints-inline { display: none; }
   @media (max-width: 960px) {
-    .page { grid-template-columns: 1fr; gap: 40px; }
-    .device-col { position: static; height: auto; }
-    .phone { height: auto; width: min(320px, 100%); }
+    .page { grid-template-columns: 1fr; gap: 0; }
+    .prints-col { display: none; }
+    .prints-inline { display: flex; gap: 18px; overflow-x: auto; padding: 24px 20px 32px; margin: 0 -20px; -webkit-overflow-scrolling: touch; }
+    .prints-inline .print { position: relative; left: auto; top: auto; width: 280px; flex-shrink: 0; transform: none !important; opacity: 1 !important; padding-bottom: 38px; }
+    .prints-inline .print .cap { font-size: 16px; }
+    .prints-inline .print:nth-child(odd) { transform: rotate(-2deg) !important; }
+    .prints-inline .print:nth-child(even) { transform: rotate(2deg) !important; }
   }
+  @media (prefers-reduced-motion: reduce) { .print { transition: opacity 300ms ease; } }
 
   /* ---- Nav ---- */
   .nav {
@@ -256,6 +227,13 @@
 
   </header>
 
+  <div class="prints-inline" aria-hidden="true">
+      <figure class="print s0" data-i="0"><img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening"><figcaption class="cap">Hackathon night</figcaption><span class="stamp">05 09 26 · 01</span></figure>
+      <figure class="print s1" data-i="1"><img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus"><figcaption class="cap">Ethnic day, somehow</figcaption><span class="stamp">05 09 26 · 02</span></figure>
+      <figure class="print s2" data-i="2"><img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell"><figcaption class="cap">After the last round</figcaption><span class="stamp">05 09 26 · 03</span></figure>
+      <figure class="print tall s3" data-i="3"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform"><figcaption class="cap">The one who made it</figcaption><span class="stamp">05 09 26 · 04</span></figure>
+  </div>
+
   <div class="hair"></div>
 
   <section id="how">
@@ -363,56 +341,13 @@
 
   </div>
 
-
-  <aside class="device-col" aria-label="WeWere running on a phone">
-    <div class="phone rise d2"><div class="screen" id="screen">
-      <div class="view grid is-on" data-view="0">
-        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
-        <div><div class="name">Freshers 26'</div><div class="sub">4 exposures · 6 friends · 1 night</div></div>
-        <div class="faces"><span style="background:#F2C27B;border:2px solid var(--gold)">S</span><span style="background:#E8B4C9">A</span><span style="background:#9AC6E8">K</span><span style="background:#6F8F6A">M</span><span style="background:#CFD7E2">P</span><span style="background:#E8A87C">D</span></div>
-        <div class="chips"><span class="chip on">All</span><span class="chip">Starred</span></div>
-        <div class="day">Friday, 5 September</div>
-        <div class="hero-tile"><img src="photos/2.jpg" alt=""><span class="lbl"><i></i>Most starred · Sidhyarth</span></div>
-        <div class="tiles"><div><img src="photos/3.jpg" alt=""><span class="star"><i></i></span></div><div><img src="photos/4.jpg" alt=""></div><div><img src="photos/1.jpg" alt=""><span class="star"><i></i></span></div></div>
-        <div class="bar"><span class="ring"></span><span class="shutter"><i></i></span><span class="ring"></span></div>
-      </div>
-      <div class="view viewer" data-view="1">
-        <img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening">
-        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><div class="by"><span class="av">S</span><div><b>Sidhyarth</b><small>Fri 5 Sep · 21:17</small></div></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
-        <div class="bottom">
-          <div class="cap">Hackathon night</div>
-          <div class="starred">Starred by 4</div>
-          <div class="acts"><span class="act star"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"/></svg></i>Starred</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/></svg></i>Share</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/></svg></i>Save</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg></i>Delete</span></div>
-        </div>
-      </div>
-      <div class="view viewer" data-view="2">
-        <img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus">
-        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><div class="by"><span class="av">S</span><div><b>Sidhyarth</b><small>Fri 5 Sep · 21:24</small></div></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
-        <div class="bottom">
-          <div class="cap">Ethnic day, somehow</div>
-          <div class="starred">Starred by 3</div>
-          <div class="acts"><span class="act star"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"/></svg></i>Starred</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/></svg></i>Share</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/></svg></i>Save</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg></i>Delete</span></div>
-        </div>
-      </div>
-      <div class="view viewer" data-view="3">
-        <img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell">
-        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><div class="by"><span class="av">S</span><div><b>Sidhyarth</b><small>Fri 5 Sep · 21:31</small></div></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
-        <div class="bottom">
-          <div class="cap">After the last round</div>
-          <div class="starred">Starred by 5</div>
-          <div class="acts"><span class="act star"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"/></svg></i>Starred</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/></svg></i>Share</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/></svg></i>Save</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg></i>Delete</span></div>
-        </div>
-      </div>
-      <div class="view viewer" data-view="4">
-        <img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform">
-        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><div class="by"><span class="av">S</span><div><b>Sidhyarth</b><small>Fri 5 Sep · 21:38</small></div></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
-        <div class="bottom">
-          <div class="cap">The one who made it</div>
-          <div class="starred">Starred by 2</div>
-          <div class="acts"><span class="act star"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"/></svg></i>Starred</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/></svg></i>Share</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/></svg></i>Save</span><span class="act"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg></i>Delete</span></div>
-        </div>
-      </div>
-    </div></div>
+  <aside class="prints-col" aria-label="Photos from the roll">
+    <div class="table" id="table">
+      <figure class="print s0" data-i="0"><img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening"><figcaption class="cap">Hackathon night</figcaption><span class="stamp">05 09 26 · 01</span></figure>
+      <figure class="print s1" data-i="1"><img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus"><figcaption class="cap">Ethnic day, somehow</figcaption><span class="stamp">05 09 26 · 02</span></figure>
+      <figure class="print s2" data-i="2"><img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell"><figcaption class="cap">After the last round</figcaption><span class="stamp">05 09 26 · 03</span></figure>
+      <figure class="print tall s3" data-i="3"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform"><figcaption class="cap">The one who made it</figcaption><span class="stamp">05 09 26 · 04</span></figure>
+    </div>
   </aside>
   </div>
 
@@ -429,27 +364,34 @@
 
 
 
+
+
 <script>
-  // Scroll drives the phone: the roll's grid at the top, then each photo opens in
-  // the viewer as its section arrives.
+  // Scrolling deals the prints: each section you reach sends the top print off the
+  // table and the one beneath it takes its place. Scroll back and it returns.
   (function () {
-    var screen = document.getElementById('screen');
-    if (!screen) return;
-    var views = Array.prototype.slice.call(screen.querySelectorAll('.view'));
+    var table = document.getElementById('table');
+    if (!table) return;
+    var prints = Array.prototype.slice.call(table.querySelectorAll('.print'));
     var marks = ['.hero', '#how', '#inside', '#privacy', '#install'].map(function (q) { return document.querySelector(q); });
-    var current = -1, ticking = false;
-    function pick() {
+    var n = prints.length, current = -1, ticking = false;
+    function deal() {
       ticking = false;
-      var line = window.innerHeight * 0.42, idx = 0;
-      for (var i = 0; i < marks.length; i++) { if (marks[i].getBoundingClientRect().top <= line) idx = i; }
-      if (idx === current) return;
-      current = idx;
-      views.forEach(function (v, i) { v.classList.toggle('is-on', i === idx); });
+      var line = window.innerHeight * 0.42, step = 0;
+      for (var i = 0; i < marks.length; i++) { if (marks[i].getBoundingClientRect().top <= line) step = i; }
+      step = Math.min(step, n - 1);
+      if (step === current) return;
+      current = step;
+      prints.forEach(function (pr, i) {
+        pr.classList.remove('s0', 's1', 's2', 's3', 'gone');
+        if (i < step) pr.classList.add('gone');
+        else pr.classList.add('s' + Math.min(i - step, 3));
+      });
     }
-    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(pick); } }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(deal); } }
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
-    pick();
+    deal();
   })();
 </script>
 </body>
