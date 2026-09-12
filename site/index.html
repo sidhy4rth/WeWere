@@ -81,17 +81,19 @@
   /* dealt away: off the table, top-right, gone */
   .print.gone { z-index: 5; transform: translate(260px, -520px) rotate(14deg) scale(0.9); opacity: 0; pointer-events: none; }
 
-  /* narrow: prints become a row you can swipe */
+  /* narrow: the stack pins to the top of the screen and the page scrolls under it,
+     so the same dealing happens on a phone. */
   .prints-inline { display: none; }
   @media (max-width: 960px) {
     .page { grid-template-columns: 1fr; gap: 0; }
-    .prints-col { display: none; }
-    .prints-inline { display: flex; gap: 18px; overflow-x: auto; padding: 24px 20px 32px; margin: 0 -20px; -webkit-overflow-scrolling: touch; }
-    .prints-inline .print { position: relative; left: auto; top: auto; width: 280px; flex-shrink: 0; transform: none !important; opacity: 1 !important; padding-bottom: 38px; }
-    .prints-inline .print .cap { font-size: 16px; }
-    .prints-inline .print:nth-child(odd) { transform: rotate(-2deg) !important; }
-    .prints-inline .print:nth-child(even) { transform: rotate(2deg) !important; }
+    .prints-col { order: -1; position: sticky; top: 0; z-index: 5; height: 42vh; height: 42dvh; min-height: 280px;
+      justify-content: center; align-items: center; overflow: visible;
+      background: linear-gradient(180deg, var(--ink) 0%, var(--ink) 80%, rgba(11,10,8,0) 100%); }
+    .table { width: 460px; height: 560px; transform: translateY(-4px) scale(0.58); transform-origin: 50% 50%; flex-shrink: 0; }
+    .content { padding-top: 0; }
+    .hero { padding-block: 8px 48px; }
   }
+  @media (max-width: 420px) { .table { transform: translateY(16px) scale(0.52); } }
   @media (prefers-reduced-motion: reduce) { .print { transition: opacity 300ms ease; } }
 
   /* ---- Nav ---- */
