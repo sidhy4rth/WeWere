@@ -81,19 +81,21 @@
   /* dealt away: off the table, top-right, gone */
   .print.gone { z-index: 5; transform: translate(260px, -520px) rotate(14deg) scale(0.9); opacity: 0; pointer-events: none; }
 
-  /* narrow: the stack pins to the top of the screen and the page scrolls under it,
-     so the same dealing happens on a phone. */
-  .prints-inline { display: none; }
+  /* narrow: no stack — each print sits in the flow just before its section and rises
+     into place as it scrolls into view. */
+  .print-inline { display: none; }
   @media (max-width: 960px) {
     .page { grid-template-columns: 1fr; gap: 0; }
-    .prints-col { order: -1; position: sticky; top: 0; z-index: 5; height: 42vh; height: 42dvh; min-height: 280px;
-      justify-content: center; align-items: center; overflow: visible;
-      background: linear-gradient(180deg, var(--ink) 0%, var(--ink) 80%, rgba(11,10,8,0) 100%); }
-    .table { width: 460px; height: 560px; transform: translateY(-4px) scale(0.58); transform-origin: 50% 50%; flex-shrink: 0; }
-    .content { padding-top: 0; }
-    .hero { padding-block: 8px 48px; }
+    .prints-col { display: none; }
+    .print-inline { display: block; position: relative; left: auto; top: auto; width: min(100%, 420px);
+      margin: 36px auto 8px; padding: 10px 10px 36px; opacity: 0; transform: translateY(28px) rotate(-1.5deg);
+      transition: transform 900ms cubic-bezier(.2,.8,.2,1), opacity 600ms ease; }
+    .print-inline:nth-of-type(even) { transform: translateY(28px) rotate(1.5deg); }
+    .print-inline.seen { opacity: 1; transform: rotate(-1.5deg); }
+    .print-inline.seen:nth-of-type(even) { transform: rotate(1.5deg); }
+    .print-inline .cap { font-size: 17px; left: 14px; bottom: 10px; }
+    .print-inline .stamp { right: 14px; bottom: 13px; }
   }
-  @media (max-width: 420px) { .table { transform: translateY(16px) scale(0.52); } }
   @media (prefers-reduced-motion: reduce) { .print { transition: opacity 300ms ease; } }
 
   /* ---- Nav ---- */
@@ -189,6 +191,7 @@
     .spec .row { grid-template-columns: 120px 1fr; }
     section { padding-block: 48px; }
   }
+  @media (max-width: 640px) { .nav-links { display: none; } }
   @media (max-width: 480px) {
     .btn { width: 100%; }
     .spec .row { grid-template-columns: 1fr; gap: 6px; }
@@ -229,12 +232,7 @@
 
   </header>
 
-  <div class="prints-inline" aria-hidden="true">
-      <figure class="print s0" data-i="0"><img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening"><figcaption class="cap">Hackathon night</figcaption><span class="stamp">05 09 26 · 01</span></figure>
-      <figure class="print s1" data-i="1"><img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus"><figcaption class="cap">Ethnic day, somehow</figcaption><span class="stamp">05 09 26 · 02</span></figure>
-      <figure class="print s2" data-i="2"><img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell"><figcaption class="cap">After the last round</figcaption><span class="stamp">05 09 26 · 03</span></figure>
-      <figure class="print tall s3" data-i="3"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform"><figcaption class="cap">The one who made it</figcaption><span class="stamp">05 09 26 · 04</span></figure>
-  </div>
+  <figure class="print print-inline"><img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening" loading="lazy"><figcaption class="cap">Hackathon night</figcaption><span class="stamp">05 09 26 · 01</span></figure>
 
   <div class="hair"></div>
 
@@ -263,6 +261,8 @@
     </div>
   </section>
 
+  <figure class="print print-inline"><img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus" loading="lazy"><figcaption class="cap">Ethnic day, somehow</figcaption><span class="stamp">05 09 26 · 02</span></figure>
+
   <div class="hair"></div>
 
   <section id="inside">
@@ -287,6 +287,8 @@
     </div>
   </section>
 
+  <figure class="print print-inline"><img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell" loading="lazy"><figcaption class="cap">After the last round</figcaption><span class="stamp">05 09 26 · 03</span></figure>
+
   <div class="hair"></div>
 
   <section id="privacy">
@@ -306,6 +308,8 @@
       </div>
     </div>
   </section>
+
+  <figure class="print print-inline tall"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform" loading="lazy"><figcaption class="cap">The one who made it</figcaption><span class="stamp">05 09 26 · 04</span></figure>
 
   <div class="hair"></div>
 
@@ -394,6 +398,15 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     deal();
+  })();
+  // On phones the prints sit in the page; each rises in the first time it is seen.
+  (function () {
+    var inline = document.querySelectorAll('.print-inline');
+    if (!inline.length || !('IntersectionObserver' in window)) { inline.forEach && inline.forEach(function (p) { p.classList.add('seen'); }); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); } });
+    }, { threshold: 0.25 });
+    inline.forEach(function (p) { io.observe(p); });
   })();
 </script>
 </body>

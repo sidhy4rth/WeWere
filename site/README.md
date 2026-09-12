@@ -20,8 +20,8 @@ package. The APK itself is git-ignored in this folder.
 `photos/1.jpg` … `4.jpg` are the prints stacked on the right — ivory borders, captions,
 date stamps, the same motif as the app's sign-in screen. The stack is pinned; each
 section you scroll into deals the top print off the table, and scrolling back returns
-it. Order and captions are the `<figure class="print">` blocks in `index.html` (they
-appear twice: once for the pinned stack, once for the swipeable row on phones — keep
-both in sync). Replace a photo by overwriting the file (JPEG, ~1300–1900 px wide,
-quality ~75) and redeploying. They're real people — only use shots your friends are
-happy to have on the open web.
+it. On phones there is no stack: the same four prints sit in the page, one just before
+each section, and rise in as they scroll into view. Each photo therefore appears twice
+in `index.html` (stack + `print-inline`) — keep captions in sync. Replace a photo by
+overwriting the file (JPEG, ~1300–1900 px wide, quality ~75) and redeploying. They're
+real people — only use shots your friends are happy to have on the open web.
