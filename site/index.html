@@ -42,7 +42,7 @@
   a:hover { color: var(--gold-light); }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 999px; }
 
-  .wrap { max-width: 1040px; margin: 0 auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
   .readout {
     font-family: var(--mono);
     font-size: 11px;
@@ -54,28 +54,59 @@
   h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
   p { margin: 0; max-width: 60ch; }
 
-  /* ---- Photo backdrop ----
-     The page is printed on the roll itself: your photos, under a wash of the page's
-     own black so they read as texture. Each section is tied to one photo and the
-     backdrop crossfades as you scroll. */
-  .backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--ink); }
-  .backdrop img {
-    position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover;
-    opacity: 0; filter: blur(1.5px) saturate(0.75) brightness(0.95);
-    transform: scale(1.02);
-    transition: opacity 1100ms ease;
-    will-change: opacity, transform;
-  }
-  .backdrop img.is-active { opacity: 1; animation: drift 18s ease-in-out infinite alternate; }
-  .backdrop::after {
-    content: ""; position: absolute; inset: 0;
+  /* ---- Page shell: content left, film reel right ---- */
+  .page { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 64px; align-items: start; }
+  .content { min-width: 0; padding-bottom: 72px; }
+  .reel-col { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; }
+  .reel { position: relative; height: 100%; }
+  .reel::before, .reel::after { content: ""; position: absolute; left: 0; right: 0; height: 120px; z-index: 2; pointer-events: none; }
+  .reel::before { top: 0; background: linear-gradient(180deg, var(--ink), transparent); }
+  .reel::after { bottom: 0; background: linear-gradient(0deg, var(--ink), transparent); }
+  .strip {
+    position: absolute; left: 50%; top: 0; transform: translate3d(-50%, 0, 0);
+    width: 300px; padding: 40px 0; will-change: transform;
+    display: flex; flex-direction: column; gap: 28px;
     background:
-      radial-gradient(120% 90% at 50% 0%, rgba(11,10,8,0.3) 0%, rgba(11,10,8,0.62) 55%, rgba(11,10,8,0.8) 100%),
-      linear-gradient(180deg, rgba(11,10,8,0.6) 0%, rgba(11,10,8,0.72) 100%);
+      radial-gradient(rgba(243,237,224,0.42) 0 3px, transparent 3.6px) 14px 0 / 20px 22px repeat-y,
+      radial-gradient(rgba(243,237,224,0.42) 0 3px, transparent 3.6px) calc(100% - 14px) 0 / 20px 22px repeat-y,
+      #0e0d0b;
+    background-repeat: repeat-y, repeat-y, no-repeat;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.04);
   }
-  .wrap { position: relative; z-index: 1; }
-  @keyframes drift { from { transform: scale(1.02) translate3d(0, 0, 0); } to { transform: scale(1.08) translate3d(-1.5%, 1%, 0); } }
-  @media (prefers-reduced-motion: reduce) { .backdrop img.is-active { animation: none; } }
+  .strip::before, .strip::after {
+    content: "WEWERE · 400 · ISO 400 · WEWERE · 400 · ISO 400 · WEWERE · 400 · ISO 400 · WEWERE · 400 · ISO 400 · WEWERE · 400";
+    position: absolute; top: 0; bottom: 0; width: 12px;
+    writing-mode: vertical-rl; font-family: var(--mono); font-size: 7px; letter-spacing: 0.18em;
+    color: var(--gold); opacity: 0.55; white-space: nowrap; overflow: hidden; line-height: 12px;
+  }
+  .strip::before { left: 26px; }
+  .strip::after { right: 26px; transform: rotate(180deg); }
+  .frame { margin: 0 40px; display: flex; flex-direction: column; gap: 8px; }
+  .frame .photo { position: relative; aspect-ratio: 3 / 2; border-radius: 3px; overflow: hidden; background: var(--surface); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); }
+  .frame .photo img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.92) contrast(1.04); transition: transform 900ms cubic-bezier(.2,.8,.2,1); }
+  .frame.is-on .photo img { transform: scale(1.03); }
+  .frame .photo::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 40px rgba(0,0,0,0.35); pointer-events: none; }
+  .frame .tag { display: flex; justify-content: space-between; align-items: baseline; }
+  .frame .tag .n { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; color: var(--gold); opacity: 0.8; }
+  .frame .tag .cap { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ivory-muted); }
+  .frame.is-on .tag .cap { color: var(--ivory); }
+  .frame.is-on .tag .n { opacity: 1; }
+  .frame.tall .photo { aspect-ratio: 4 / 5; }
+
+  /* narrow: the reel becomes a horizontal strip after the hero */
+  .reel-inline { display: none; }
+  @media (max-width: 960px) {
+    .page { grid-template-columns: 1fr; gap: 0; }
+    .reel-col { display: none; }
+    .reel-inline { display: block; margin: 8px -20px 0; padding: 22px 0; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      background:
+        radial-gradient(rgba(243,237,224,0.42) 0 3px, transparent 3.6px) 0 8px / 22px 20px repeat-x,
+        radial-gradient(rgba(243,237,224,0.42) 0 3px, transparent 3.6px) 0 calc(100% - 8px) / 22px 20px repeat-x,
+        #0e0d0b;
+      background-repeat: repeat-x, repeat-x, no-repeat; }
+    .reel-inline .row { display: flex; gap: 18px; padding: 14px 20px; width: max-content; }
+    .reel-inline .frame { margin: 0; width: 240px; flex-shrink: 0; }
+  }
 
   /* ---- Nav ---- */
   .nav {
@@ -106,10 +137,11 @@
 
   /* ---- Hero ---- */
   .hero {
-    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center;
+    display: grid; grid-template-columns: 1fr; gap: 44px; align-items: start;
     padding-block: 56px 72px;
   }
-  .hero h1 { font-size: clamp(48px, 7vw, 84px); line-height: 0.98; font-weight: 500; }
+  @media (min-width: 1360px) { .hero { grid-template-columns: 1.1fr 0.9fr; align-items: center; } }
+  .hero h1 { font-size: clamp(44px, 5.6vw, 72px); line-height: 0.98; font-weight: 500; }
   .hero h1 em { font-style: italic; color: var(--gold); }
   .hero .lede { font-size: 19px; color: var(--ivory-muted); margin-top: 22px; }
   .hero .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; align-items: center; }
@@ -117,9 +149,9 @@
   .hero .fine code { font-family: var(--mono); font-size: 12px; color: var(--ivory-muted); }
 
   /* ---- Phone ---- */
-  .phone-wrap { display: flex; justify-content: center; }
+  .phone-wrap { display: flex; justify-content: flex-start; }
   .phone {
-    width: 320px; max-width: 100%; aspect-ratio: 390 / 800;
+    width: 280px; max-width: 100%; aspect-ratio: 390 / 800;
     border-radius: 40px; padding: 10px;
     background: linear-gradient(160deg, #2a2620, #0d0c0a);
     box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
@@ -206,7 +238,7 @@
   }
 
   @media (max-width: 860px) {
-    .hero { grid-template-columns: 1fr; gap: 40px; padding-block: 36px 56px; }
+    .hero { gap: 36px; padding-block: 36px 48px; }
     .steps, .spec, .privacy, .install { grid-template-columns: 1fr; }
     .spec .row { grid-template-columns: 120px 1fr; }
     section { padding-block: 48px; }
@@ -220,13 +252,6 @@
 <body>
 
 
-<div class="backdrop" aria-hidden="true">
-  <img src="photos/1.jpg" alt="" class="is-active" data-bg="1" decoding="async">
-  <img src="photos/2.jpg" alt="" data-bg="2" loading="lazy" decoding="async">
-  <img src="photos/3.jpg" alt="" data-bg="3" loading="lazy" decoding="async">
-  <img src="photos/4.jpg" alt="" data-bg="4" loading="lazy" decoding="async">
-</div>
-
 <div class="wrap">
   <nav class="nav">
     <span class="wordmark">WeWere</span>
@@ -239,7 +264,9 @@
   </nav>
   <div class="hair"></div>
 
-  <header class="hero" data-bg="1">
+  <div class="page">
+  <div class="content">
+  <header class="hero">
     <div>
       <div class="readout rise">Android · Free · No ads, ever</div>
       <h1 class="rise d1" style="margin-top: 16px;">One shared camera roll for the people you <em>were with.</em></h1>
@@ -293,9 +320,16 @@
     </div>
   </header>
 
+  <div class="reel-inline" aria-hidden="true"><div class="row">
+      <figure class="frame" data-step="0"><div class="photo"><img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening"></div><figcaption class="tag"><span class="n">01 · A</span><span class="cap">Hackathon night</span></figcaption></figure>
+      <figure class="frame" data-step="1"><div class="photo"><img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus"></div><figcaption class="tag"><span class="n">02 · A</span><span class="cap">Ethnic day, somehow</span></figcaption></figure>
+      <figure class="frame" data-step="2"><div class="photo"><img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell"></div><figcaption class="tag"><span class="n">03 · A</span><span class="cap">After the last round</span></figcaption></figure>
+      <figure class="frame tall" data-step="3"><div class="photo"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform"></div><figcaption class="tag"><span class="n">04 · A</span><span class="cap">The one who made it</span></figcaption></figure>
+  </div></div>
+
   <div class="hair"></div>
 
-  <section id="how" data-bg="2">
+  <section id="how">
     <div class="section-head">
       <span class="readout">How it works</span>
       <h2>Three things, in this order.</h2>
@@ -322,7 +356,7 @@
 
   <div class="hair"></div>
 
-  <section id="inside" data-bg="3">
+  <section id="inside">
     <div class="section-head">
       <span class="readout">What's inside</span>
       <h2>Small on purpose.</h2>
@@ -346,7 +380,7 @@
 
   <div class="hair"></div>
 
-  <section id="privacy" data-bg="4">
+  <section id="privacy">
     <div class="section-head">
       <span class="readout">Privacy</span>
       <h2>Private means the people in the roll.</h2>
@@ -366,7 +400,7 @@
 
   <div class="hair"></div>
 
-  <section id="install" data-bg="2">
+  <section id="install">
     <div class="section-head">
       <span class="readout">Install</span>
       <h2>Get it on your phone.</h2>
@@ -398,6 +432,18 @@
     </div>
   </section>
 
+  </div>
+
+  <aside class="reel-col" aria-label="Photos from the roll">
+    <div class="reel"><div class="strip" id="strip">
+      <figure class="frame" data-step="0"><div class="photo"><img src="photos/2.jpg" alt="Five friends in black and red at a hackathon evening"></div><figcaption class="tag"><span class="n">01 · A</span><span class="cap">Hackathon night</span></figcaption></figure>
+      <figure class="frame" data-step="1"><div class="photo"><img src="photos/3.jpg" alt="Five friends squeezed into a selfie on campus"></div><figcaption class="tag"><span class="n">02 · A</span><span class="cap">Ethnic day, somehow</span></figcaption></figure>
+      <figure class="frame" data-step="2"><div class="photo"><img src="photos/4.jpg" alt="Six friends grinning at the camera under a stairwell"></div><figcaption class="tag"><span class="n">03 · A</span><span class="cap">After the last round</span></figcaption></figure>
+      <figure class="frame tall" data-step="3"><div class="photo"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform"></div><figcaption class="tag"><span class="n">04 · A</span><span class="cap">The one who made it</span></figcaption></figure>
+    </div></div>
+  </aside>
+  </div>
+
   <div class="hair"></div>
 
   <footer>
@@ -407,28 +453,45 @@
 </div>
 
 
+
+
 <script>
-  // The last tagged section whose top has crossed the middle of the screen owns
-  // the backdrop — no gaps between sections, no dependence on section height.
+  // The reel winds forward with the page: one frame per section. On wide screens
+  // the strip is translated so the current frame sits mid-screen; frames light up
+  // as they arrive.
   (function () {
-    var imgs = Array.prototype.slice.call(document.querySelectorAll('.backdrop img'));
-    var sections = Array.prototype.slice.call(document.querySelectorAll('[data-bg]:not(img)'));
-    if (!imgs.length || !sections.length) return;
-    var current = null, ticking = false;
-    function pick() {
-      ticking = false;
-      var mid = window.innerHeight * 0.5, id = sections[0].dataset.bg;
-      for (var i = 0; i < sections.length; i++) {
-        if (sections[i].getBoundingClientRect().top <= mid) id = sections[i].dataset.bg;
+    var strip = document.getElementById('strip');
+    if (!strip) return;
+    var frames = Array.prototype.slice.call(strip.querySelectorAll('.frame'));
+    var marks = ['.hero', '#how', '#inside', '#privacy', '#install'].map(function (q) { return document.querySelector(q); });
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ticking = false;
+    function progress() {
+      // 0 at the hero, 1 at the install section, linear in between by scroll position.
+      var mid = window.scrollY + window.innerHeight * 0.45;
+      var tops = marks.map(function (m) { return m.getBoundingClientRect().top + window.scrollY; });
+      if (mid <= tops[0]) return 0;
+      for (var i = 0; i < tops.length - 1; i++) {
+        if (mid < tops[i + 1]) return (i + (mid - tops[i]) / (tops[i + 1] - tops[i])) / (tops.length - 1);
       }
-      if (id === current) return;
-      current = id;
-      imgs.forEach(function (img) { img.classList.toggle('is-active', img.dataset.bg === id); });
+      return 1;
     }
-    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(pick); } }
+    function update() {
+      ticking = false;
+      var p = progress();
+      var vh = window.innerHeight;
+      var span = strip.offsetHeight - vh;
+      var y = -Math.max(0, span) * p;
+      strip.style.transform = 'translate3d(-50%, ' + y.toFixed(1) + 'px, 0)';
+      var idx = Math.min(frames.length - 1, Math.round(p * (frames.length - 1)));
+      frames.forEach(function (f, i) { f.classList.toggle('is-on', i === idx); });
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+    if (!reduce) strip.style.transition = 'transform 380ms cubic-bezier(.2,.8,.2,1)';
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
-    pick();
+    window.addEventListener('load', update);
+    update();
   })();
 </script>
 </body>

@@ -15,9 +15,12 @@ The APK is served from the same folder, so the download button is a relative lin
 `vercel.json` sets the APK's content type so phones treat it as an installable
 package. The APK itself is git-ignored in this folder.
 
-## Backdrop photos
+## The film reel
 
-`photos/1.jpg` … `4.jpg` sit behind the page under a dark wash and crossfade as you
-scroll; each section's `data-bg` picks one. To swap a photo, replace the file (JPEG,
-~1300–1900 px wide, quality ~75) and redeploy. They're real people — only use shots
-your friends are happy to have on the open web.
+`photos/1.jpg` … `4.jpg` are the frames on the reel down the right-hand side. It is
+sticky and winds forward with the page — one frame per section — so the order of the
+`<figure class="frame">` blocks in `index.html` is the order they arrive. Each frame
+has a frame number and an italic caption; edit those in place. On phones the same
+frames become a horizontal strip under the hero. Replace a photo by overwriting the
+file (JPEG, ~1300–1900 px wide, quality ~75) and redeploying. They're real people —
+only use shots your friends are happy to have on the open web.
