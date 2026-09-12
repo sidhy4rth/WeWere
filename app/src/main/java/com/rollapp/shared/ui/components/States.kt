@@ -107,10 +107,10 @@ private fun errorGuidance(error: AppError): String = when (error) {
     AppError.Timeout -> "The connection is slow right now."
     AppError.PermissionDenied -> "Ask an admin to invite you again."
     AppError.GroupNotFound -> "It may have been deleted by an admin."
-    AppError.RemovedFromGroup -> "An admin removed you from this group."
+    AppError.RemovedFromGroup -> "An admin removed you from this roll."
     AppError.InvalidInviteCode -> "Double-check the code — they're six characters."
     AppError.InviteExpired -> "Ask whoever invited you for a fresh link."
-    AppError.StorageQuotaExceeded -> "This group has hit its storage limit."
+    AppError.StorageQuotaExceeded -> "This roll has hit its storage limit."
     AppError.NotAuthenticated -> "Sign in to keep going."
     else -> "Give it another go in a moment."
 }

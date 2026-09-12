@@ -221,7 +221,7 @@ fun CreateGroupScreen(
 
             state.error?.let { error ->
                 Spacer(Modifier.height(12.dp))
-                InlineError(message = error.message ?: "Couldn't create the group")
+                InlineError(message = error.message ?: "Couldn't create the roll")
             }
 
             Spacer(Modifier.height(28.dp))

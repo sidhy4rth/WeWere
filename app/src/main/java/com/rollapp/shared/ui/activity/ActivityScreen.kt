@@ -73,7 +73,7 @@ fun ActivityScreen(
             EmptyState(
                 icon = Icons.Rounded.Notifications,
                 title = "Nothing yet",
-                body = "New photos, reactions and people joining your groups show up here.",
+                body = "New photos, reactions and people joining your rolls show up here.",
                 modifier = Modifier.padding(padding)
             )
         } else {

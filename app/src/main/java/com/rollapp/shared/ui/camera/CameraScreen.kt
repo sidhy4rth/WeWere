@@ -164,9 +164,9 @@ private fun CameraPermissionGate(
             Text(
                 text = if (shouldExplain) {
                     "Without it, you can still upload from your gallery — but taking a " +
-                        "photo straight into the group needs camera access."
+                        "photo straight into the roll needs camera access."
                 } else {
-                    "So you can take photos straight into the group. Nothing is captured " +
+                    "So you can take photos straight into the roll. Nothing is captured " +
                         "until you press the shutter."
                 },
                 style = MaterialTheme.typography.bodyMedium,

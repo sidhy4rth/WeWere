@@ -12,7 +12,7 @@ object Sharing {
         val text = buildString {
             append("Join our \"")
             append(groupName)
-            append("\" photo group 📸\n\n")
+            append("\" roll on WeWere 📸\n\n")
             append(link)
             append("\n\nOr enter the code in WeWere: ")
             append(code)

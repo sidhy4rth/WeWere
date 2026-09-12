@@ -84,7 +84,7 @@ fun GroupSettingsScreen(
     if (renaming) {
         AlertDialog(
             onDismissRequest = { renaming = false },
-            title = { Text("Edit group") },
+            title = { Text("Edit roll") },
             text = {
                 Column {
                     OutlinedTextField(
@@ -92,7 +92,7 @@ fun GroupSettingsScreen(
                         value = nameDraft,
                         onValueChange = { nameDraft = it },
                         singleLine = true,
-                        label = { Text("Group name") }
+                        label = { Text("Roll name") }
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
@@ -122,11 +122,11 @@ fun GroupSettingsScreen(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Leave this group?") },
+            title = { Text("Leave this roll?") },
             text = {
                 Text(
                     "You'll lose access to its photos. Photos you uploaded stay with the " +
-                        "group for everyone else."
+                        "roll for everyone else."
                 )
             },
             confirmButton = {
@@ -144,7 +144,7 @@ fun GroupSettingsScreen(
             title = { Text("Delete \"${state.group?.name}\"?") },
             text = {
                 Text(
-                    "Every photo in this group is permanently deleted for all " +
+                    "Every photo in this roll is permanently deleted for all " +
                         "${state.group?.memberCount ?: 0} members. This cannot be undone."
                 )
             },
@@ -160,7 +160,7 @@ fun GroupSettingsScreen(
     Scaffold(
         containerColor = Ink,
         topBar = {
-            RollTopBar(title = "Group settings", onBack = onBack)
+            RollTopBar(title = "Roll settings", onBack = onBack)
         }
     ) { padding ->
         Column(
@@ -183,7 +183,7 @@ fun GroupSettingsScreen(
             SettingsRow(
                 icon = Icons.Rounded.People,
                 title = "Members",
-                subtitle = "${group?.memberCount ?: 0} in this group",
+                subtitle = "${group?.memberCount ?: 0} in this roll",
                 onClick = { onOpenMembers(viewModel.groupId) }
             )
 
@@ -242,7 +242,7 @@ fun GroupSettingsScreen(
 
             SettingsRow(
                 icon = Icons.Rounded.Logout,
-                title = "Leave group",
+                title = "Leave roll",
                 destructive = true,
                 onClick = { confirmLeave = true }
             )
@@ -250,7 +250,7 @@ fun GroupSettingsScreen(
             if (state.isAdmin) {
                 SettingsRow(
                     icon = Icons.Rounded.DeleteForever,
-                    title = "Delete group",
+                    title = "Delete roll",
                     subtitle = "Removes every photo for everyone",
                     destructive = true,
                     onClick = { confirmDelete = true }

@@ -66,8 +66,8 @@ fun MembersScreen(
             title = { Text("Remove ${member.name}?") },
             text = {
                 Text(
-                    "They'll lose access to this group's photos. Photos they already " +
-                        "uploaded stay in the group."
+                    "They'll lose access to this roll's photos. Photos they already " +
+                        "uploaded stay in the roll."
                 )
             },
             confirmButton = {
@@ -209,7 +209,7 @@ private fun MemberRow(
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
-                        text = { Text("Remove from group") },
+                        text = { Text("Remove from roll") },
                         onClick = { menuOpen = false; onRemove() }
                     )
                 }

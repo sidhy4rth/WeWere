@@ -239,7 +239,7 @@ private fun ScannerContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Point at a group's QR code",
+                text = "Point at a roll's QR code",
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.White
             )

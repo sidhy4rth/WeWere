@@ -53,7 +53,7 @@ private val pages = listOf(
     OnboardingPage(
         Icons.Rounded.PhotoCamera,
         "Capture together",
-        "Take photos straight from Roll and they land in the group instantly."
+        "Take photos straight from WeWere and they land in the roll instantly."
     ),
     OnboardingPage(
         Icons.Rounded.PhotoLibrary,
@@ -63,7 +63,7 @@ private val pages = listOf(
     OnboardingPage(
         Icons.Rounded.AutoAwesome,
         "Keep the memories",
-        "Your group keeps a private collection of the whole trip. Nobody else can see it."
+        "Your roll is a private collection of the whole trip. Nobody else can see it."
     )
 )
 

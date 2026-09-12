@@ -125,7 +125,7 @@ fun ReviewScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Share to group", style = MaterialTheme.typography.labelLarge)
+                        Text("Share to roll", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }

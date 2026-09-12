@@ -145,7 +145,7 @@ fun GroupScreen(
     if (state.accessRevoked) {
         AlertDialog(
             onDismissRequest = onBack,
-            title = { Text("You're no longer in this group") },
+            title = { Text("You're no longer in this roll") },
             text = { Text("An admin removed you, so its photos aren't available any more.") },
             confirmButton = { TextButton(onClick = onBack) { Text("OK") } }
         )
@@ -161,7 +161,7 @@ fun GroupScreen(
             text = {
                 Text(
                     buildString {
-                        append("They're removed for everyone in the group and can't be recovered.")
+                        append("They're removed for everyone in the roll and can't be recovered.")
                         // Be explicit rather than silently dropping part of the selection.
                         if (skipped > 0) {
                             append("\n\n$skipped of your selection ")

@@ -119,8 +119,8 @@ fun ProfileScreen(
             title = { Text("Delete your account?") },
             text = {
                 Text(
-                    "Your profile is deleted and you're removed from your groups. Photos " +
-                        "you've already shared stay with those groups."
+                    "Your profile is deleted and you're removed from your rolls. Photos " +
+                        "you've already shared stay with those rolls."
                 )
             },
             confirmButton = {
@@ -235,7 +235,7 @@ fun ProfileScreen(
                 )
                 Text(
                     text = "You're signed in as a guest. Add an email so you don't lose " +
-                        "your groups if you change phones.",
+                        "your rolls if you change phones.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
@@ -252,7 +252,7 @@ fun ProfileScreen(
 
             PrefSwitch(
                 label = "New photos",
-                subtitle = "When friends add photos to your groups",
+                subtitle = "When friends add photos to your rolls",
                 checked = state.prefs.newPhotos,
                 onChange = { viewModel.updatePrefs(state.prefs.copy(newPhotos = it)) }
             )
@@ -264,7 +264,7 @@ fun ProfileScreen(
             )
             PrefSwitch(
                 label = "People joining",
-                subtitle = "When someone new joins a group",
+                subtitle = "When someone new joins a roll",
                 checked = state.prefs.memberJoined,
                 onChange = { viewModel.updatePrefs(state.prefs.copy(memberJoined = it)) }
             )
@@ -343,7 +343,7 @@ private fun GuestUpgradeDialog(
         text = {
             Column {
                 Text(
-                    text = "Your groups and photos stay exactly as they are.",
+                    text = "Your rolls and photos stay exactly as they are.",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(16.dp))
