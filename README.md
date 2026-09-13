@@ -1,6 +1,20 @@
-# WeWere
+<p align="center">
+  <img src="docs/icon.png" width="96" alt="WeWere icon">
+</p>
 
-**One shared camera roll for the people you were with.**
+<h1 align="center">WeWere</h1>
+
+<p align="center"><b>One shared camera roll for the people you were with.</b></p>
+
+<p align="center">
+  <a href="https://wewere.vercel.app">Website</a> ·
+  <a href="https://wewere.vercel.app/WeWere-1.0.3.apk">Download 1.0.3</a> ·
+  <a href="#quick-start">Build it yourself</a>
+</p>
+
+<p align="center">
+  <a href="https://wewere.vercel.app"><img src="docs/site.jpg" width="720" alt="The WeWere landing page: one shared camera roll for the people you were with"></a>
+</p>
 
 Start a roll for the trip, the wedding, the flat. Everyone in it shoots straight from
 the app or adds from their gallery, and everyone else sees the photo within seconds —
