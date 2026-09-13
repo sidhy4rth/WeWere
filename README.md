@@ -20,8 +20,8 @@ app's earlier name; only what the user sees says WeWere.)*
 ## Quick start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/wewere.git
-cd wewere
+git clone https://github.com/sidhy4rth/WeWere.git
+cd WeWere
 cp app/google-services.json.example app/google-services.json   # compiles; talks to nothing
 cp local.properties.example local.properties                   # then set sdk.dir
 ./gradlew assembleDebug
