@@ -475,7 +475,7 @@ class FirestoreGroupRepository @Inject constructor(
     }
 
     override suspend fun regenerateInviteCode(groupId: String, expiresAt: Long?): Outcome<String> {
-        uidOrNull() ?: return Outcome.Failure(AppError.NotAuthenticated)
+        val uid = uidOrNull() ?: return Outcome.Failure(AppError.NotAuthenticated)
 
         return firebaseCall {
             val snapshot = group(groupId).get().await()
@@ -491,7 +491,8 @@ class FirestoreGroupRepository @Inject constructor(
                     "coverPhotoUrl" to snapshot.getString("coverPhotoUrl"),
                     "memberCount" to (snapshot.getLong("memberCount") ?: 0L),
                     "photoCount" to (snapshot.getLong("photoCount") ?: 0L),
-                    "createdBy" to (snapshot.getString("createdBy") ?: ""),
+                    // Who minted this invite — the rules require it to be the caller.
+                    "createdBy" to uid,
                     "createdAt" to FieldValue.serverTimestamp(),
                     "expiresAt" to expiresAt?.let { com.google.firebase.Timestamp(java.util.Date(it)) },
                     "revoked" to false

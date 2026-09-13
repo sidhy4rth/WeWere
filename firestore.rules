@@ -149,7 +149,11 @@ service cloud.firestore {
       // ---------------------------------------------------------- members
 
       match /members/{memberId} {
-        allow read: if isMember(groupId);
+        // The join flow first asks "am I already in?" by reading its own member
+        // document, at which point the caller is not yet a member — so everyone may
+        // get their OWN row. The list, and anyone else's row, stay members-only.
+        allow get: if isMe(memberId) || isMember(groupId);
+        allow list: if isMember(groupId);
 
         // Joining: you may only ever create your own membership, and only as a
         // plain member. Self-promotion to ADMIN is refused here.

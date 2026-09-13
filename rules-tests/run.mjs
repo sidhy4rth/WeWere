@@ -180,6 +180,16 @@ await test("anyone signed in can resolve an invite code", async () => {
   await assertSucceeds(getDoc(doc(bob(), `invites/${CODE}`)));
 });
 
+await test("a non-member can check their own (absent) membership before joining", async () => {
+  await seedGroup();
+  await assertSucceeds(getDoc(doc(bob(), `groups/${GROUP}/members/${BOB}`)));
+});
+
+await test("a non-member still cannot read anyone else's member row", async () => {
+  await seedGroup();
+  await assertFails(getDoc(doc(bob(), `groups/${GROUP}/members/${ALICE}`)));
+});
+
 await test("the invites collection cannot be enumerated", async () => {
   await seedGroup();
   await assertFails(getDocs(collection(bob(), "invites")));
