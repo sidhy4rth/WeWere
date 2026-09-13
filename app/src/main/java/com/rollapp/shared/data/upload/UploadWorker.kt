@@ -7,6 +7,7 @@ import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import java.io.File
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -55,6 +56,7 @@ class UploadWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         dao.recoverInterrupted()
+        sweepOrphanedStagedFiles()
 
         val uid = auth.currentUser?.uid ?: return Result.success()
 
@@ -80,6 +82,7 @@ class UploadWorker @AssistedInject constructor(
                 val fresh = dao.getById(item.id) ?: continue
                 if (fresh.state == UploadState.CANCELLED.name) {
                     dao.delete(item.id)
+                    deleteStagedFile(fresh)
                     continue
                 }
 
@@ -89,6 +92,7 @@ class UploadWorker @AssistedInject constructor(
                     UploadOutcome.Success -> {
                         dao.setState(item.id, UploadState.COMPLETED.name, null)
                         dao.delete(item.id)
+                        deleteStagedFile(fresh)
                     }
 
                     is UploadOutcome.Retryable -> {
@@ -112,6 +116,30 @@ class UploadWorker @AssistedInject constructor(
         }
 
         return if (anyRetryable) Result.retry() else Result.success()
+    }
+
+    /**
+     * The staged copy under filesDir/upload_queue exists only so the queue survives the
+     * gallery's uri grant expiring. Once the photo is up — or abandoned — it is dead
+     * weight, and at a hundred photos a pick that is hundreds of megabytes.
+     */
+    private fun deleteStagedFile(item: UploadEntity) {
+        runCatching { Uri.parse(item.localUri).path?.let { File(it).delete() } }
+    }
+
+    /**
+     * Rows removed by other paths (clearFinished, a cancelled item nobody drained)
+     * leave their files behind; reconcile the directory against the table on every
+     * run so nothing accumulates, whatever route the row left by.
+     */
+    private suspend fun sweepOrphanedStagedFiles() {
+        runCatching {
+            val dir = File(applicationContext.filesDir, STAGING_DIR)
+            val live = dao.allLocalUris().mapNotNull { Uri.parse(it).path }.toSet()
+            dir.listFiles().orEmpty()
+                .filter { it.absolutePath !in live }
+                .forEach { it.delete() }
+        }.onFailure { Log.w(TAG, "Staged-file sweep failed", it) }
     }
 
     private suspend fun uploadOne(item: UploadEntity): UploadOutcome {
@@ -326,6 +354,9 @@ class UploadWorker @AssistedInject constructor(
         private const val NOTIFICATION_ID = 4201
         private const val TAG = "UploadWorker"
         private const val BATCH_SIZE = 8
+
+        /** Must match where FirestorePhotoRepository.stageLocally writes. */
+        const val STAGING_DIR = "upload_queue"
 
         /** The thumbnail is a small fraction of the bytes; weight the bar accordingly. */
         private const val THUMB_SHARE = 0.15f

@@ -24,6 +24,7 @@ import com.rollapp.shared.data.remote.snapshots
 import com.rollapp.shared.data.remote.str
 import com.rollapp.shared.data.remote.toPhoto
 import com.rollapp.shared.data.upload.UploadScheduler
+import com.rollapp.shared.data.upload.UploadWorker
 import com.rollapp.shared.domain.model.MemberRole
 import com.rollapp.shared.domain.model.Photo
 import com.rollapp.shared.domain.model.PhotoFilter
@@ -186,7 +187,7 @@ class FirestorePhotoRepository @Inject constructor(
     }
 
     private suspend fun stageLocally(uri: Uri): Uri = withContext(Dispatchers.IO) {
-        val dir = File(context.filesDir, "upload_queue").apply { mkdirs() }
+        val dir = File(context.filesDir, UploadWorker.STAGING_DIR).apply { mkdirs() }
         val target = File(dir, "${UUID.randomUUID()}.jpg")
         context.contentResolver.openInputStream(uri)?.use { input ->
             target.outputStream().use { output -> input.copyTo(output) }

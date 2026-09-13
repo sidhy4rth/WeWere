@@ -23,6 +23,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.alpha
+import com.rollapp.shared.core.Limits
 import com.rollapp.shared.ui.components.GoldButton
 import com.rollapp.shared.ui.components.Hairline
 import com.rollapp.shared.ui.components.Readout
@@ -204,7 +205,7 @@ private fun CameraContent(
     val cameraProvider = remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
     val galleryPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(30)
+        ActivityResultContracts.PickMultipleVisualMedia(Limits.MAX_GALLERY_SELECTION)
     ) { uris -> if (uris.isNotEmpty()) onPickFromGallery(uris) }
 
     // Rebind whenever the lens or flash changes; CameraX use cases are immutable in

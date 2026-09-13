@@ -85,6 +85,10 @@ interface UploadDao {
     @Query("DELETE FROM pending_uploads WHERE id = :id")
     suspend fun delete(id: String)
 
+    /** Every staged file still referenced by a row; anything else on disk is an orphan. */
+    @Query("SELECT localUri FROM pending_uploads")
+    suspend fun allLocalUris(): List<String>
+
     @Query("DELETE FROM pending_uploads WHERE state = 'COMPLETED' OR state = 'CANCELLED'")
     suspend fun clearFinished()
 

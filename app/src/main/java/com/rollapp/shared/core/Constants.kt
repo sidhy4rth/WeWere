@@ -50,7 +50,8 @@ object Limits {
 
     const val INVITE_CODE_LENGTH = 6
     const val MAX_UPLOAD_ATTEMPTS = 5
-    const val MAX_GALLERY_SELECTION = 30
+    /** Android's photo picker refuses anything above 100 (MediaStore.getPickImagesMaxLimit). */
+    const val MAX_GALLERY_SELECTION = 100
 
     /** Avatars denormalised onto the group doc for the home screen card. */
     const val GROUP_CARD_AVATARS = 4
