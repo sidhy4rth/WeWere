@@ -8,7 +8,7 @@ The APK is served from the same folder, so the download button is a relative lin
 ## Deploy (Vercel)
 
 1. `./gradlew assembleRelease`
-2. Copy `app/build/outputs/apk/release/app-release.apk` here as `WeWere.apk`
+2. Copy `app/build/outputs/apk/release/app-release.apk` here as `WeWere-<version>.apk` and point both download buttons in `index.html` at it. The name carries the version on purpose: a browser that resumes a stalled download of `WeWere.apk` would stitch the old release's first chunk onto the new one and produce a file that is the right size but will not install.
 3. Update the version, size and SHA-256 in `index.html`
 4. `npx vercel --prod` from this folder (first time: `npx vercel login`)
 

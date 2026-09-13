@@ -8,7 +8,7 @@
   ],
   "headers": [
     {
-      "source": "/WeWere.apk",
+      "source": "/(.*\\.apk)",
       "headers": [
         {
           "key": "Content-Type",
@@ -16,7 +16,7 @@
         },
         {
           "key": "Content-Disposition",
-          "value": "attachment; filename=\"WeWere.apk\""
+          "value": "attachment"
         },
         {
           "key": "Cache-Control",
