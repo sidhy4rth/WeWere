@@ -57,51 +57,61 @@ class UploadWorker @AssistedInject constructor(
         dao.recoverInterrupted()
 
         val uid = auth.currentUser?.uid ?: return Result.success()
-        val batch = dao.claimBatch(BATCH_SIZE).filter { it.ownerUid == uid }
-        if (batch.isEmpty()) return Result.success()
 
+        // Drain the whole queue in this one run. Returning retry() with work still
+        // queued would hand the rest to WorkManager's exponential backoff — 30s, 60s,
+        // 2min... between batches — which reads as "stuck after eight photos". Items
+        // that failed retryably this run are set aside so the loop cannot spin on them;
+        // they wait for the backoff, which is what it is for.
+        val deferred = mutableSetOf<String>()
         var anyRetryable = false
+        var done = 0
 
-        for ((index, item) in batch.withIndex()) {
-            // The user may have cancelled while an earlier item was in flight.
-            val fresh = dao.getById(item.id) ?: continue
-            if (fresh.state == UploadState.CANCELLED.name) {
-                dao.delete(item.id)
-                continue
-            }
+        while (true) {
+            val batch = dao.claimBatch(BATCH_SIZE)
+                .filter { it.ownerUid == uid && it.id !in deferred }
+            if (batch.isEmpty()) break
+            // Photos picked while we were running join the count, so "3 of 10" can
+            // become "3 of 14" but never runs past the end.
+            val total = done + dao.countActive()
 
-            setForegroundSafely(index + 1, batch.size)
-
-            when (val outcome = uploadOne(fresh)) {
-                UploadOutcome.Success -> {
-                    dao.setState(item.id, UploadState.COMPLETED.name, null)
+            for (item in batch) {
+                // The user may have cancelled while an earlier item was in flight.
+                val fresh = dao.getById(item.id) ?: continue
+                if (fresh.state == UploadState.CANCELLED.name) {
                     dao.delete(item.id)
+                    continue
                 }
 
-                is UploadOutcome.Retryable -> {
-                    dao.incrementAttempts(item.id)
-                    val attempts = (dao.getById(item.id)?.attemptCount ?: 0)
-                    if (attempts >= Limits.MAX_UPLOAD_ATTEMPTS) {
+                setForegroundSafely(done + 1, total)
+
+                when (val outcome = uploadOne(fresh)) {
+                    UploadOutcome.Success -> {
+                        dao.setState(item.id, UploadState.COMPLETED.name, null)
+                        dao.delete(item.id)
+                    }
+
+                    is UploadOutcome.Retryable -> {
+                        dao.incrementAttempts(item.id)
+                        val attempts = (dao.getById(item.id)?.attemptCount ?: 0)
+                        if (attempts >= Limits.MAX_UPLOAD_ATTEMPTS) {
+                            dao.setState(item.id, UploadState.FAILED.name, outcome.reason)
+                        } else {
+                            dao.setState(item.id, UploadState.QUEUED.name, outcome.reason)
+                            deferred += item.id
+                            anyRetryable = true
+                        }
+                    }
+
+                    is UploadOutcome.Permanent -> {
                         dao.setState(item.id, UploadState.FAILED.name, outcome.reason)
-                    } else {
-                        dao.setState(item.id, UploadState.QUEUED.name, outcome.reason)
-                        anyRetryable = true
                     }
                 }
-
-                is UploadOutcome.Permanent -> {
-                    dao.setState(item.id, UploadState.FAILED.name, outcome.reason)
-                }
+                done++
             }
         }
 
-        // More work left in the queue than one batch could carry.
-        val remaining = dao.countActive()
-        return when {
-            anyRetryable -> Result.retry()
-            remaining > 0 -> Result.retry()
-            else -> Result.success()
-        }
+        return if (anyRetryable) Result.retry() else Result.success()
     }
 
     private suspend fun uploadOne(item: UploadEntity): UploadOutcome {
