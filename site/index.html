@@ -171,6 +171,9 @@
   .install .facts div { display: flex; flex-direction: column; gap: 4px; }
   .install .facts b { font-weight: 600; color: var(--ivory); font-variant-numeric: tabular-nums; }
   .install .facts .readout { color: var(--muted); }
+  .about { display: flex; flex-direction: column; gap: 36px; }
+  .about p { color: var(--ivory-muted); font-size: 17px; }
+  .quote { margin: 0; max-width: 24ch; font-family: var(--serif); font-style: italic; font-weight: 600; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.15; color: var(--gold); text-wrap: balance; }
   .checksum { font-family: var(--mono); font-size: 11px; color: var(--muted); word-break: break-all; line-height: 1.5; }
 
   footer { padding-block: 40px 56px; display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; color: var(--muted); font-size: 14px; }
@@ -211,7 +214,7 @@
       <a href="#inside">What's inside</a>
       <a href="#privacy">Privacy</a>
       <a href="#install">Install</a>
-      <a href="/about">About</a>
+      <a href="#about">About</a>
     </div>
   </nav>
   <div class="hair"></div>
@@ -312,8 +315,6 @@
     </div>
   </section>
 
-  <figure class="print print-inline tall"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform" loading="lazy"><figcaption class="cap">The one who made it</figcaption><span class="stamp">05 09 26 · 04</span></figure>
-
   <div class="hair"></div>
 
   <section id="install">
@@ -336,7 +337,7 @@
         </div>
         <div>
           <span class="readout" style="color: var(--muted);">SHA-256</span>
-          <div class="checksum">0a2e2f123859c39c2ea1f7ccce91dfa79f631b988a7cba0730d8ed3dee2b63b5</div>
+          <div class="checksum">24ea0443728464ce93b6a7e2a8e3e3fea066b67cf3f4717fc24fa7449e2cffb5</div>
         </div>
       </div>
       <ol>
@@ -345,6 +346,21 @@
         <li><span>Tap <strong>Install</strong>. Google Play Protect may offer to scan it first — that's fine.</span></li>
         <li><span>Open WeWere, sign in with Google or email, and start a roll. Send the code to whoever you were with.</span></li>
       </ol>
+    </div>
+  </section>
+
+  <figure class="print print-inline tall"><img src="photos/1.jpg" alt="A student in sunglasses smiling in a school uniform" loading="lazy"><figcaption class="cap">The one who made it</figcaption><span class="stamp">05 09 26 · 04</span></figure>
+
+  <div class="hair"></div>
+
+  <section id="about">
+    <div class="section-head">
+      <span class="readout">About</span>
+      <h2>The one who made it.</h2>
+    </div>
+    <div class="about">
+      <p>Sidhyarth is a pioneer in crypto and blockchain, currently working on crypto and fraud detection. He did his 10th at Ryan International School, Bangalore, his 12th at Delhi Public School Bangalore East, and is now a freshman at Alliance University. Along the way he hosted India's first school-level Valorant esports tournament and served as IT President for two consecutive years.</p>
+      <blockquote class="quote">Don't worry if it doesn't work right: if everything did, you would be out of your job.</blockquote>
     </div>
   </section>
 
@@ -364,7 +380,7 @@
 
   <footer>
     <span class="wordmark">WeWere</span>
-    <p>Made with ❤️ by <a href="/about">sidhY4rth</a></p>
+    <p>Made with ❤️ by <a href="#about">sidhY4rth</a></p>
   </footer>
 </div>
 
@@ -382,7 +398,7 @@
     var table = document.getElementById('table');
     if (!table) return;
     var prints = Array.prototype.slice.call(table.querySelectorAll('.print'));
-    var marks = ['.hero', '#how', '#inside', '#privacy', '#install'].map(function (q) { return document.querySelector(q); });
+    var marks = ['.hero', '#how', '#inside', '#about'].map(function (q) { return document.querySelector(q); });
     var n = prints.length, current = -1, ticking = false;
     function deal() {
       ticking = false;
