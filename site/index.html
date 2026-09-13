@@ -171,8 +171,17 @@
   .install .facts div { display: flex; flex-direction: column; gap: 4px; }
   .install .facts b { font-weight: 600; color: var(--ivory); font-variant-numeric: tabular-nums; }
   .install .facts .readout { color: var(--muted); }
-  .about { display: flex; flex-direction: column; gap: 36px; }
-  .about p { color: var(--ivory-muted); font-size: 17px; }
+  .about { display: flex; flex-direction: column; gap: 44px; }
+  .about .intro { color: var(--ivory-muted); font-size: 17px; }
+  .about .cols { display: grid; grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr); gap: 0 40px; align-items: start; }
+  .about .vhair { align-self: stretch; width: 1px; background: linear-gradient(180deg, transparent, var(--hair) 18%, var(--hair) 82%, transparent); }
+  .about .col { display: flex; flex-direction: column; gap: 6px; }
+  .about dl { margin: 0; }
+  .about .row { display: grid; grid-template-columns: 96px 1fr; gap: 16px; padding-block: 16px; border-bottom: 1px solid rgba(243,237,224,0.08); }
+  .about .row:last-child { border-bottom: 0; }
+  .about dt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); padding-top: 3px; }
+  .about dd { margin: 0; color: var(--ivory-muted); font-size: 15px; display: flex; flex-direction: column; gap: 2px; }
+  .about dd strong { color: var(--ivory); font-weight: 600; }
   .quote { margin: 0; max-width: 24ch; font-family: var(--serif); font-style: italic; font-weight: 600; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.15; color: var(--gold); text-wrap: balance; }
   .checksum { font-family: var(--mono); font-size: 11px; color: var(--muted); word-break: break-all; line-height: 1.5; }
 
@@ -194,6 +203,8 @@
     .hero { gap: 36px; padding-block: 36px 48px; }
     .steps, .spec, .privacy, .install { grid-template-columns: 1fr; }
     .spec .row { grid-template-columns: 120px 1fr; }
+    .about .cols { grid-template-columns: 1fr; gap: 28px; }
+    .about .vhair { width: auto; height: 1px; background: linear-gradient(90deg, transparent, var(--hair), transparent); }
     section { padding-block: 48px; }
   }
   @media (max-width: 640px) { .nav-links { display: none; } }
@@ -359,7 +370,25 @@
       <h2>The one who made it.</h2>
     </div>
     <div class="about">
-      <p>Sidhyarth is a pioneer in crypto and blockchain, currently working on crypto and fraud detection. He did his 10th at Ryan International School, Bangalore, his 12th at Delhi Public School Bangalore East, and is now a freshman at Alliance University. Along the way he hosted India's first school-level Valorant esports tournament and served as IT President for two consecutive years.</p>
+      <p class="intro">Sidhyarth is a pioneer in crypto and blockchain, currently working on fraud detection related to crypto.</p>
+      <div class="cols">
+        <div class="col">
+          <span class="readout">Education</span>
+          <dl>
+            <div class="row"><dt>Now</dt><dd><strong>Alliance University</strong>Freshman</dd></div>
+            <div class="row"><dt>12th</dt><dd><strong>Delhi Public School</strong>Bangalore East</dd></div>
+            <div class="row"><dt>10th</dt><dd><strong>Ryan International School</strong>Bangalore</dd></div>
+          </dl>
+        </div>
+        <div class="vhair" aria-hidden="true"></div>
+        <div class="col">
+          <span class="readout">Achievements</span>
+          <dl>
+            <div class="row"><dt>Esports</dt><dd><strong>Hosted India's first school-level Valorant tournament</strong></dd></div>
+            <div class="row"><dt>Leadership</dt><dd><strong>IT President</strong>Two consecutive years</dd></div>
+          </dl>
+        </div>
+      </div>
       <blockquote class="quote">Don't worry if it doesn't work right: if everything did, you would be out of your job.</blockquote>
     </div>
   </section>
