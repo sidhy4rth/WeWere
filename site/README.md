@@ -15,6 +15,14 @@ The APK is served from the same folder, so the download button is a relative lin
 `vercel.json` sets the APK's content type so phones treat it as an installable
 package. The APK itself is git-ignored in this folder.
 
+## The iPhone build
+
+The same page serves `WeWere-<version>.ipa`, the unsigned iOS build (see
+`ios/README.md` for how it's produced). Copy it here with the version in the name,
+update the iPhone card's version, size and SHA-256 in `index.html`, and deploy. It is
+git-ignored like the APK. `vercel.json` serves `.ipa` files as a download
+(`application/octet-stream`, attachment).
+
 ## The prints
 
 `photos/1.jpg` … `4.jpg` are the prints stacked on the right — ivory borders, captions,
@@ -29,7 +37,8 @@ real people — only use shots your friends are happy to have on the open web.
 ## Invite links
 
 Invites are `https://wewere.vercel.app/join/CODE`. `vercel.json` rewrites that path
-to `join.html`, which shows the code and an "Open in WeWere" button (`roll://join/CODE`).
+to `join.html`, which shows the code and an "Open in WeWere" button (`roll://join/CODE`,
+which both the Android and the iPhone app register).
 `.well-known/assetlinks.json` carries the app's release and debug certificate
 fingerprints so Android opens those links directly in the app once it's installed.
 If the signing key ever changes, regenerate it:

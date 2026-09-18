@@ -1,0 +1,55 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build for the simulator
+    runs-on: macos-latest
+
+    defaults:
+      run:
+        working-directory: ios
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The newest Xcode on the image; the project needs the iOS 17 SDK or later.
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          xcodebuild -version
+
+      # Like google-services.json on Android, the real Firebase and Supabase config is
+      # git-ignored. The committed templates compile and talk to nothing.
+      - name: Provide config templates
+        run: |
+          cp WeWere/Resources/GoogleService-Info.example.plist WeWere/Resources/GoogleService-Info.plist
+          cp WeWere/Resources/Config.example.plist WeWere/Resources/Config.plist
+
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: ios/DerivedData/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('ios/WeWere.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project WeWere.xcodeproj -scheme WeWere -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath DerivedData -clonedSourcePackagesDirPath DerivedData/SourcePackages \
+            CODE_SIGNING_ALLOWED=NO -quiet

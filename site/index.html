@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>WeWere</title>
-<meta name="description" content="WeWere — one shared camera roll for the people you were with. Private rolls for your friends, on Android.">
+<meta name="description" content="WeWere — one shared camera roll for the people you were with. Private rolls for your friends, on Android and iPhone.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -160,17 +160,20 @@
   .privacy .honest { padding: 22px 24px; border: 1px solid var(--hair); border-radius: 18px; background: var(--surface); }
   .privacy .honest .readout { display: block; margin-bottom: 10px; }
 
-  .install { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-  .install ol { margin: 0; padding-left: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 14px; }
-  .install li { display: grid; grid-template-columns: 32px 1fr; gap: 12px; color: var(--ivory-muted); font-size: 15px; }
-  .install li span { max-width: 60ch; }
-  .install li strong { color: var(--ivory); font-weight: 600; }
-  .install li::before { counter-increment: s; content: counter(s, decimal-leading-zero); font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--gold); padding-top: 4px; }
-  .install .card { padding: 26px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); display: flex; flex-direction: column; gap: 18px; }
-  .install .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
-  .install .facts div { display: flex; flex-direction: column; gap: 4px; }
-  .install .facts b { font-weight: 600; color: var(--ivory); font-variant-numeric: tabular-nums; }
-  .install .facts .readout { color: var(--muted); }
+  .platforms { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .platform { display: flex; flex-direction: column; gap: 20px; }
+  .platform > .readout { font-size: 12px; }
+  .platform .fine { font-size: 13px; color: var(--muted); max-width: none; }
+  .platform ol { margin: 0; padding-left: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 14px; }
+  .platform li { display: grid; grid-template-columns: 32px 1fr; gap: 12px; color: var(--ivory-muted); font-size: 15px; }
+  .platform li span { max-width: 60ch; }
+  .platform li strong { color: var(--ivory); font-weight: 600; }
+  .platform li::before { counter-increment: s; content: counter(s, decimal-leading-zero); font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--gold); padding-top: 4px; }
+  .platform .card { padding: 26px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); display: flex; flex-direction: column; gap: 18px; }
+  .platform .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+  .platform .facts div { display: flex; flex-direction: column; gap: 4px; }
+  .platform .facts b { font-weight: 600; color: var(--ivory); font-variant-numeric: tabular-nums; }
+  .platform .facts .readout { color: var(--muted); }
   .about { display: flex; flex-direction: column; gap: 44px; }
   .about .intro { color: var(--ivory-muted); font-size: 17px; }
   .about .cols { display: grid; grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr); gap: 0 40px; align-items: start; }
@@ -201,7 +204,7 @@
 
   @media (max-width: 860px) {
     .hero { gap: 36px; padding-block: 36px 48px; }
-    .steps, .spec, .privacy, .install { grid-template-columns: 1fr; }
+    .steps, .spec, .privacy, .platforms { grid-template-columns: 1fr; }
     .spec .row { grid-template-columns: 120px 1fr; }
     .about .cols { grid-template-columns: 1fr; gap: 28px; }
     .about .vhair { width: auto; height: 1px; background: linear-gradient(90deg, transparent, var(--hair), transparent); }
@@ -234,7 +237,7 @@
   <div class="content">
   <header class="hero">
     <div>
-      <div class="readout rise">Android · Free · No ads, ever</div>
+      <div class="readout rise">Android &amp; iPhone · Free · No ads, ever</div>
       <h1 class="rise d1" style="margin-top: 16px;">One shared camera roll for the people you <em>were with.</em></h1>
       <p class="lede rise d2">Start a roll for the trip, the wedding, the flat. Everyone in it shoots straight into the same place — and the week afterwards, nobody has to chase eight people for the good photos.</p>
       <div class="actions rise d3">
@@ -242,9 +245,13 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
           Download for Android
         </a>
+        <a class="btn btn-gold" href="#ios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+          Get it for iPhone
+        </a>
         <a class="btn btn-hair" href="#how">See how it works</a>
       </div>
-      <p class="fine rise d4">Version 1.0.3 · 26 MB · Android 7.0 and up · installs outside the Play Store</p>
+      <p class="fine rise d4">Version 1.0.3 · Android 7.0 and up, 26 MB · iOS 17 and up, 8.6 MB · both install outside the app stores</p>
     </div>
 
   </header>
@@ -332,31 +339,60 @@
     <div class="section-head">
       <span class="readout">Install</span>
       <h2>Get it on your phone.</h2>
-      <p>WeWere is shared directly rather than through the Play Store, so Android will ask you to allow the install. Here's what to expect.</p>
+      <p>WeWere is shared directly rather than through the app stores, so your phone will ask you to allow the install. Here's what to expect on each.</p>
     </div>
-    <div class="install">
-      <div class="card">
-        <a class="btn btn-gold" href="WeWere-1.0.3.apk">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
-          Download WeWere.apk
-        </a>
-        <div class="facts">
-          <div><span class="readout">Version</span><b>1.0.3</b></div>
-          <div><span class="readout">Size</span><b>26 MB</b></div>
-          <div><span class="readout">Requires</span><b>Android 7.0+</b></div>
-          <div><span class="readout">Built for</span><b>Android 15</b></div>
+    <div class="platforms">
+      <div class="platform" id="android">
+        <span class="readout">Android</span>
+        <div class="card">
+          <a class="btn btn-gold" href="WeWere-1.0.3.apk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+            Download WeWere.apk
+          </a>
+          <div class="facts">
+            <div><span class="readout">Version</span><b>1.0.3</b></div>
+            <div><span class="readout">Size</span><b>26 MB</b></div>
+            <div><span class="readout">Requires</span><b>Android 7.0+</b></div>
+            <div><span class="readout">Built for</span><b>Android 15</b></div>
+          </div>
+          <div>
+            <span class="readout" style="color: var(--muted);">SHA-256</span>
+            <div class="checksum">24ea0443728464ce93b6a7e2a8e3e3fea066b67cf3f4717fc24fa7449e2cffb5</div>
+          </div>
         </div>
-        <div>
-          <span class="readout" style="color: var(--muted);">SHA-256</span>
-          <div class="checksum">24ea0443728464ce93b6a7e2a8e3e3fea066b67cf3f4717fc24fa7449e2cffb5</div>
-        </div>
+        <ol>
+          <li><span>Tap <strong>Download WeWere.apk</strong>. Your browser may warn that this type of file can harm your device — that's the standard notice for any app installed outside the Play Store. Keep it.</span></li>
+          <li><span>Open the downloaded file. If Android says your browser isn't allowed to install apps, tap <strong>Settings</strong> and turn on <strong>Allow from this source</strong>, then go back.</span></li>
+          <li><span>Tap <strong>Install</strong>. Google Play Protect may offer to scan it first — that's fine.</span></li>
+          <li><span>Open WeWere, sign in with Google or email, and start a roll. Send the code to whoever you were with.</span></li>
+        </ol>
       </div>
-      <ol>
-        <li><span>Tap <strong>Download WeWere.apk</strong>. Your browser may warn that this type of file can harm your device — that's the standard notice for any app installed outside the Play Store. Keep it.</span></li>
-        <li><span>Open the downloaded file. If Android says your browser isn't allowed to install apps, tap <strong>Settings</strong> and turn on <strong>Allow from this source</strong>, then go back.</span></li>
-        <li><span>Tap <strong>Install</strong>. Google Play Protect may offer to scan it first — that's fine.</span></li>
-        <li><span>Open WeWere, sign in with Google or email, and start a roll. Send the code to whoever you were with.</span></li>
-      </ol>
+      <div class="platform" id="ios">
+        <span class="readout">iPhone</span>
+        <div class="card">
+          <a class="btn btn-gold" href="WeWere-1.0.3.ipa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+            Download WeWere.ipa
+          </a>
+          <div class="facts">
+            <div><span class="readout">Version</span><b>1.0.3</b></div>
+            <div><span class="readout">Size</span><b>8.6 MB</b></div>
+            <div><span class="readout">Requires</span><b>iOS 17+</b></div>
+            <div><span class="readout">Built for</span><b>iOS 26</b></div>
+          </div>
+          <div>
+            <span class="readout" style="color: var(--muted);">SHA-256</span>
+            <div class="checksum">f1e4029e9b342d23fb4aa90e899947eed050453ac8d99ae788d28e440d72b588</div>
+          </div>
+        </div>
+        <ol>
+          <li><span>iPhones only install apps from the App Store or through a signing tool, so the <strong>.ipa</strong> goes on with <a href="https://altstore.io">AltStore</a> or <a href="https://sideloadly.io">Sideloadly</a> — both free, both need a Mac or PC once. Install one and sign in with your Apple ID.</span></li>
+          <li><span>Download <strong>WeWere.ipa</strong> on that computer (or straight to the phone if you use AltStore's own browser), then open it with the tool. It signs the app with your Apple ID and puts it on the phone.</span></li>
+          <li><span>The first time it opens, iOS may ask you to trust the developer — that's you. It's under <strong>Settings → General → VPN &amp; Device Management</strong>.</span></li>
+          <li><span>A free Apple ID keeps the app alive for seven days at a time; AltStore renews it in the background whenever the phone and computer share a network. Open WeWere, sign in, and your rolls are the same ones as on Android.</span></li>
+        </ol>
+        <p class="fine">No App Store listing yet — Apple charges for the developer account that tap-to-install needs. If that changes, the TestFlight link will be here.</p>
+      </div>
     </div>
   </section>
 

@@ -36,3 +36,12 @@ keystore/
 # Vercel link file (machine-specific)
 .vercel/
 site/.vercel-project.json
+
+# iOS — same policy as Android: the real Firebase/Supabase config stays out of git.
+/ios/WeWere/Resources/GoogleService-Info.plist
+/ios/WeWere/Resources/Config.plist
+*.ipa
+ios/build/
+ios/DerivedData/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Copy to Config.plist (git-ignored) and fill in from Supabase → Project Settings → API.
+	     The anon key is a public identifier, not a secret; access is gated by the user's
+	     Firebase ID token and the bucket policies in supabase/storage-policies.sql. -->
+	<key>SUPABASE_URL</key>
+	<string>https://YOUR-PROJECT.supabase.co</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>YOUR-ANON-KEY</string>
+	<key>SUPABASE_BUCKET</key>
+	<string>roll</string>
+</dict>
+</plist>

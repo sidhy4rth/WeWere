@@ -8,7 +8,8 @@
 
 <p align="center">
   <a href="https://wewere.vercel.app">Website</a> ·
-  <a href="https://wewere.vercel.app/WeWere-1.0.3.apk">Download 1.0.3</a> ·
+  <a href="https://wewere.vercel.app/WeWere-1.0.3.apk">Android 1.0.3</a> ·
+  <a href="https://wewere.vercel.app/#ios">iPhone 1.0.3</a> ·
   <a href="#quick-start">Build it yourself</a>
 </p>
 
@@ -21,7 +22,9 @@ the app or adds from their gallery, and everyone else sees the photo within seco
 so the week afterwards, nobody has to chase eight people for the good ones.
 
 - **Website & download:** https://wewere.vercel.app
-- **Platform:** native Android (7.0+) — Kotlin, Jetpack Compose, Material 3, CameraX
+- **Platforms:** native Android (7.0+) — Kotlin, Jetpack Compose, Material 3, CameraX —
+  and native iOS (17+) — Swift, SwiftUI, AVFoundation — in [`ios/`](ios/). Same
+  backend, same rolls, same design; an account works on both.
 - **Backend:** Firebase Auth + Firestore (free Spark plan) and Supabase Storage for
   the image bytes (free tier, no card) — see [Setup](#setup)
 - **Look:** black and gold. Cormorant Garamond for titles, Manrope for body,
@@ -41,7 +44,16 @@ cp local.properties.example local.properties                   # then set sdk.di
 ./gradlew assembleDebug
 ```
 
-That gets you a building project. To make it *work* — real accounts, real photos, real
+That gets you a building Android project. For the iPhone app:
+
+```bash
+cd ios
+cp WeWere/Resources/GoogleService-Info.example.plist WeWere/Resources/GoogleService-Info.plist
+cp WeWere/Resources/Config.example.plist WeWere/Resources/Config.plist
+open WeWere.xcodeproj        # or: xcodebuild -scheme WeWere -destination 'generic/platform=iOS Simulator'
+```
+
+To make either *work* — real accounts, real photos, real
 sync — follow [Setup](#setup) and point it at your own Firebase and Supabase projects.
 Nothing in this repository contains credentials: `google-services.json`,
 `local.properties` and the release keystore are git-ignored on purpose.
@@ -57,6 +69,8 @@ Nothing in this repository contains credentials: `google-services.json`,
 | `./gradlew lintDebug` | **0 errors** |
 | Firestore rules suite (emulator) | **46 passed**, 0 failed |
 | On a phone | sign-in, create roll, upload, view, star — verified on a OnePlus (Android 16) against the live backend |
+| `xcodebuild` (iOS, simulator + device) | pass — unsigned release build is 8.6 MB zipped, 31 MB installed |
+| iOS in the simulator | guest and email sign-in, create roll, upload from the photo library, timeline, viewer, reactions, stars, invite by code and by `roll://` link, members, settings, save to Photos, slideshow — against the live backend |
 
 The four automated checks run in CI on every push — see `.github/workflows/android.yml`.
 
@@ -293,6 +307,12 @@ di/            Hilt modules
 `domain/repository/` and changing the `@Binds` in `di/RepositoryModule.kt`. No UI file
 imports anything from `com.google.firebase`.
 
+The iOS app in `ios/WeWere/` mirrors this layer for layer — `Core/`, `Domain/`,
+`Data/`, `UI/`, `App/` — with Combine publishers where Android has Flows, a JSON file
+where Android has Room, and one `AppContainer` where Android has Hilt. It talks to the
+same Firestore documents and the same Supabase bucket, so a roll started on one
+platform is the same roll on the other. `ios/README.md` has the details.
+
 A few decisions worth knowing about:
 
 - **Errors** are translated out of Firebase's exception vocabulary into a sealed
@@ -349,7 +369,8 @@ Photo Picker, which hands over exactly the images you selected. Declaring
 ## Website and releases
 
 `site/` is the landing page — one HTML file plus the photos on it, hosted on Vercel at
-https://wewere.vercel.app next to the APK, so the download button is a plain link.
+https://wewere.vercel.app next to the APK and the iPhone `.ipa`, so the download
+buttons are plain links.
 `site/README.md` covers deploying, the invite-link page (`/join/CODE`) and the
 `assetlinks.json` that lets Android open invite links directly in the app.
 
@@ -358,6 +379,11 @@ own once (`local.properties.example` has the command), keep it and its passwords
 safe, and add its SHA-1 to your Firebase Android app and its SHA-256 to
 `site/.well-known/assetlinks.json`. Bump `versionCode` in `app/build.gradle.kts` for
 every APK you publish.
+
+The iPhone build is shared as an **unsigned `.ipa`** that people install with AltStore
+or Sideloadly and their own Apple ID. Apple only allows tap-to-install links (TestFlight,
+ad-hoc, the App Store) with a paid developer account, which this project doesn't have;
+`ios/README.md` has the packaging steps and what changes if that ever happens.
 
 ## Known gaps
 
