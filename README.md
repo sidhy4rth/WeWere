@@ -7,6 +7,13 @@
 <p align="center"><b>One shared camera roll for the people you were with.</b></p>
 
 <p align="center">
+  <a href="https://github.com/sidhy4rth/WeWere/actions/workflows/android.yml"><img src="https://github.com/sidhy4rth/WeWere/actions/workflows/android.yml/badge.svg" alt="Android CI"></a>
+  <a href="https://github.com/sidhy4rth/WeWere/actions/workflows/ios.yml"><img src="https://github.com/sidhy4rth/WeWere/actions/workflows/ios.yml/badge.svg" alt="iOS CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-D4AF37?labelColor=0B0A08" alt="MIT license"></a>
+  <a href="https://wewere.vercel.app"><img src="https://img.shields.io/badge/release-1.0.3-D4AF37?labelColor=0B0A08" alt="Release 1.0.3"></a>
+</p>
+
+<p align="center">
   <a href="https://wewere.vercel.app">Website</a> ·
   <a href="https://wewere.vercel.app/WeWere-1.0.3.apk">Android 1.0.3</a> ·
   <a href="https://wewere.vercel.app/#ios">iPhone 1.0.3</a>
