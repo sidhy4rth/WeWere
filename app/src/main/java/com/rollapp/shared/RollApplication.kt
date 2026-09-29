@@ -12,6 +12,7 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.rollapp.shared.data.upload.UploadScheduler
+import com.rollapp.shared.domain.repository.BillingRepository
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -20,6 +21,7 @@ class RollApplication : Application(), Configuration.Provider, ImageLoaderFactor
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var uploadScheduler: UploadScheduler
+    @Inject lateinit var billingRepository: BillingRepository
 
     override fun onCreate() {
         super.onCreate()
@@ -27,6 +29,7 @@ class RollApplication : Application(), Configuration.Provider, ImageLoaderFactor
             com.google.firebase.firestore.FirebaseFirestore.setLoggingEnabled(true)
         }
         createNotificationChannels()
+        billingRepository.start()
         // Anything left in the queue from a previous run resumes on launch.
         uploadScheduler.ensureRunning()
     }

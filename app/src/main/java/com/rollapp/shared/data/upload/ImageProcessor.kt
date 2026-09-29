@@ -59,18 +59,24 @@ class ImageProcessor @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
-    suspend fun prepare(uri: Uri): ProcessedUpload = withContext(Dispatchers.Default) {
+    /**
+     * A developed roll keeps near-original frames; a free roll gets the lighter
+     * encode. The thumbnail is the same either way — the grid never needs more.
+     */
+    suspend fun prepare(uri: Uri, developed: Boolean = false): ProcessedUpload = withContext(Dispatchers.Default) {
+        val maxEdge = if (developed) Limits.DEVELOPED_IMAGE_MAX_EDGE else Limits.FULL_IMAGE_MAX_EDGE
+        val quality = if (developed) Limits.DEVELOPED_IMAGE_QUALITY else Limits.FULL_IMAGE_QUALITY
         val capturedAt = readCaptureTime(uri)
-        val source = decodeScaled(uri, Limits.FULL_IMAGE_MAX_EDGE)
+        val source = decodeScaled(uri, maxEdge)
             ?: error("Could not read that image")
 
         try {
             val oriented = applyOrientation(uri, source)
-            val full = oriented.scaledTo(Limits.FULL_IMAGE_MAX_EDGE)
+            val full = oriented.scaledTo(maxEdge)
             val thumb = oriented.scaledTo(Limits.THUMBNAIL_MAX_EDGE)
 
             val result = ProcessedUpload(
-                full = full.toJpeg(Limits.FULL_IMAGE_QUALITY),
+                full = full.toJpeg(quality),
                 thumbnail = thumb.toJpeg(Limits.THUMBNAIL_QUALITY),
                 capturedAt = capturedAt
             )

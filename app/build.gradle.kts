@@ -26,6 +26,11 @@ val supabaseUrl: String = localProps.getProperty("SUPABASE_URL") ?: ""
 val supabaseAnonKey: String = localProps.getProperty("SUPABASE_ANON_KEY") ?: ""
 val supabaseBucket: String = localProps.getProperty("SUPABASE_BUCKET") ?: "roll"
 
+// RevenueCat public SDK key (Project -> API keys). A Test Store key starts with
+// "test_" and the SDK refuses to run with one in a release build, so the app only
+// configures purchases in release when the key is a real store key.
+val revenueCatApiKey: String = localProps.getProperty("REVENUECAT_API_KEY") ?: ""
+
 // Point a debug build at a local Firebase Emulator Suite instead of a real project.
 // Set USE_FIREBASE_EMULATOR=true in local.properties to try the app end to end
 // without creating a Firebase project at all.
@@ -52,6 +57,7 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
         buildConfigField("String", "SUPABASE_BUCKET", "\"$supabaseBucket\"")
+        buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
     }
 
     // Release signing comes from local.properties (git-ignored). Without it the release
@@ -177,6 +183,7 @@ dependencies {
 
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.revenuecat)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

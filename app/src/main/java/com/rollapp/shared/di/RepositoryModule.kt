@@ -1,11 +1,13 @@
 package com.rollapp.shared.di
 
+import com.rollapp.shared.data.billing.RevenueCatBillingRepository
 import com.rollapp.shared.data.repository.FirebaseAuthRepository
 import com.rollapp.shared.data.repository.FirestoreGroupRepository
 import com.rollapp.shared.data.repository.FirestorePhotoRepository
 import com.rollapp.shared.data.repository.FirestoreUserRepository
 import com.rollapp.shared.data.repository.RoomUploadQueueRepository
 import com.rollapp.shared.domain.repository.AuthRepository
+import com.rollapp.shared.domain.repository.BillingRepository
 import com.rollapp.shared.domain.repository.GroupRepository
 import com.rollapp.shared.domain.repository.PhotoRepository
 import com.rollapp.shared.domain.repository.UploadQueueRepository
@@ -44,4 +46,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUploadQueueRepository(impl: RoomUploadQueueRepository): UploadQueueRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBillingRepository(impl: RevenueCatBillingRepository): BillingRepository
 }

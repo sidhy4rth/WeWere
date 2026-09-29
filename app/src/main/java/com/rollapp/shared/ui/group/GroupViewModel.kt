@@ -135,10 +135,20 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    fun uploadFromGallery(uris: List<Uri>, caption: String? = null) {
-        if (uris.isEmpty()) return
+    /**
+     * Queues [uris], keeping only as many as a free roll still has room for —
+     * counting what is already on its way up. Returns how many were left out, so the
+     * screen can say so and offer to develop the roll.
+     */
+    fun uploadFromGallery(uris: List<Uri>, caption: String? = null): Int {
+        if (uris.isEmpty()) return 0
+        val current = state.value
+        val room = current.group?.exposuresLeft
+            ?.let { (it - current.uploadingCount).coerceAtLeast(0) }
+            ?: uris.size
+        val accepted = uris.take(room)
         viewModelScope.launch {
-            uris.forEach { uri ->
+            accepted.forEach { uri ->
                 photoRepository.enqueueUpload(
                     groupId = groupId,
                     localUri = uri,
@@ -149,6 +159,7 @@ class GroupViewModel @Inject constructor(
                 )
             }
         }
+        return uris.size - accepted.size
     }
 
     fun retryFailed() {
@@ -215,6 +226,33 @@ class GroupViewModel @Inject constructor(
                     clearSelection()
                     onDone(outcome.data)
                 }
+                is Outcome.Failure -> transientError.value = outcome.error
+            }
+        }
+    }
+
+    /**
+     * A developed roll's perk for everyone in it: the whole roll, not just what has
+     * paged in, saved to the device at full quality.
+     */
+    fun saveWholeRoll(onDone: (Int) -> Unit) {
+        if (state.value.bulkProgress != null) return
+        viewModelScope.launch {
+            bulkProgress.value = BulkProgress(BulkAction.SAVING, 0, state.value.group?.photoCount ?: 0)
+            val all = when (val fetched = photoRepository.fetchAllPhotos(groupId)) {
+                is Outcome.Success -> fetched.data
+                is Outcome.Failure -> {
+                    bulkProgress.value = null
+                    transientError.value = fetched.error
+                    return@launch
+                }
+            }
+            val outcome = photoRepository.downloadAllToGallery(all) { done, total ->
+                bulkProgress.value = BulkProgress(BulkAction.SAVING, done, total)
+            }
+            bulkProgress.value = null
+            when (outcome) {
+                is Outcome.Success -> onDone(outcome.data)
                 is Outcome.Failure -> transientError.value = outcome.error
             }
         }

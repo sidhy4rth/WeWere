@@ -53,6 +53,9 @@ interface PhotoRepository {
         onProgress: (done: Int, total: Int) -> Unit = { _, _ -> }
     ): Outcome<Int>
 
+    /** Every photo in the roll, newest first — for saving a whole developed roll. */
+    suspend fun fetchAllPhotos(groupId: String): Outcome<List<Photo>>
+
     /** Deletes several photos, skipping any the user has no right to remove. */
     suspend fun deletePhotos(groupId: String, photoIds: List<String>): Outcome<Int>
 

@@ -147,7 +147,19 @@ class UploadWorker @AssistedInject constructor(
             dao.setState(item.id, UploadState.UPLOADING.name, null)
             dao.setProgress(item.id, 0f)
 
-            val processed = imageProcessor.prepare(Uri.parse(item.localUri))
+            // The roll decides the quality, and a full free roll takes nothing more.
+            // Unreadable (offline, say) falls back to the free encode rather than
+            // failing — the rules still have the final word on the write.
+            val group = runCatching {
+                firestore.collection(FirestorePaths.GROUPS).document(item.groupId).get().await()
+            }.getOrNull()
+            val developed = group?.getBoolean("developed") == true
+            val photoCount = group?.getLong("photoCount") ?: 0L
+            if (!developed && photoCount >= Limits.FREE_ROLL_PHOTO_LIMIT) {
+                return UploadOutcome.Permanent(ROLL_FULL)
+            }
+
+            val processed = imageProcessor.prepare(Uri.parse(item.localUri), developed)
 
             // Reuse the id from a previous attempt so a retry overwrites the same
             // storage objects instead of orphaning the ones already uploaded.
@@ -354,6 +366,7 @@ class UploadWorker @AssistedInject constructor(
         private const val NOTIFICATION_ID = 4201
         private const val TAG = "UploadWorker"
         private const val BATCH_SIZE = 8
+        const val ROLL_FULL = "This roll is full — develop it to keep shooting"
 
         /** Must match where FirestorePhotoRepository.stageLocally writes. */
         const val STAGING_DIR = "upload_queue"

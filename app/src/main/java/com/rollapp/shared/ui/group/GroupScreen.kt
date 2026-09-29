@@ -120,10 +120,47 @@ fun GroupScreen(
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     var confirmBulkDelete by remember { mutableStateOf(false) }
+    var showDevelop by remember { mutableStateOf(false) }
+    var revealing by remember { mutableStateOf(false) }
 
     val galleryPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(Limits.MAX_GALLERY_SELECTION)
-    ) { uris -> viewModel.uploadFromGallery(uris) }
+    ) { uris ->
+        val skipped = viewModel.uploadFromGallery(uris)
+        if (skipped > 0) {
+            showDevelop = true
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    "$skipped ${if (skipped == 1) "photo didn't" else "photos didn't"} fit on this roll"
+                )
+            }
+        }
+    }
+
+    // A full free roll turns both capture buttons into the Develop sheet.
+    val rollFull = state.group?.isFull == true
+    val developerName = state.group?.developedBy?.let { uid ->
+        if (uid == state.myUid) "you"
+        else state.members.firstOrNull { it.uid == uid }?.name?.substringBefore(" ")
+    }
+
+    // Reveal only on the false -> true edge, so opening an already-developed roll
+    // doesn't replay it. Everyone with the roll open sees it, not just the buyer.
+    var wasDeveloped by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(state.group?.developed) {
+        val now = state.group?.developed ?: return@LaunchedEffect
+        if (wasDeveloped == false && now) {
+            showDevelop = false
+            revealing = true
+        }
+        wasDeveloped = now
+    }
+
+    if (showDevelop) {
+        state.group?.let { group ->
+            DevelopSheet(group = group, onDismiss = { showDevelop = false })
+        }
+    }
 
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -193,6 +230,7 @@ fun GroupScreen(
     // section opens on the shot the group itself voted for.
     val heroIds = remember(state.timeline) { pickHeroes(state.timeline) }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = Ink,
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -236,7 +274,18 @@ fun GroupScreen(
                             onOpenSlideshow = {
                                 onOpenSlideshow(viewModel.groupId, PhotoFilterCodec.encode(state.filter))
                             },
-                            onFilter = viewModel::setFilter
+                            onFilter = viewModel::setFilter,
+                            developerName = developerName,
+                            onDevelop = { showDevelop = true },
+                            onSaveRoll = {
+                                viewModel.saveWholeRoll { count ->
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            "Saved $count ${if (count == 1) "photo" else "photos"} to your gallery"
+                                        )
+                                    }
+                                }
+                            }
                         )
                     }
                 }
@@ -374,12 +423,15 @@ fun GroupScreen(
                         icon = Icons.Rounded.PhotoLibrary,
                         contentDescription = "Upload from gallery",
                         onClick = {
-                            galleryPicker.launch(
+                            if (rollFull) showDevelop = true
+                            else galleryPicker.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
                         }
                     )
-                    Shutter(onClick = { onOpenCamera(viewModel.groupId) })
+                    Shutter(onClick = {
+                        if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
+                    })
                     RingButton(
                         icon = Icons.Rounded.People,
                         contentDescription = "Members",
@@ -388,6 +440,14 @@ fun GroupScreen(
                 }
             }
         }
+    }
+
+    DevelopedReveal(
+        visible = revealing,
+        photoUrl = state.photos.firstOrNull()?.imageUrl ?: state.group?.coverPhotoUrl,
+        developerName = developerName?.takeIf { it != "you" },
+        onDone = { revealing = false }
+    )
     }
 }
 
@@ -399,7 +459,10 @@ private fun GroupHeader(
     onOpenMembers: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenSlideshow: () -> Unit,
-    onFilter: (PhotoFilter) -> Unit
+    onFilter: (PhotoFilter) -> Unit,
+    developerName: String?,
+    onDevelop: () -> Unit,
+    onSaveRoll: () -> Unit
 ) {
     Column(modifier = Modifier.statusBarsPadding()) {
         Row(
@@ -436,6 +499,18 @@ private fun GroupHeader(
                         color = Gold
                     )
                 }
+            }
+        }
+
+        state.group?.let { group ->
+            Spacer(Modifier.height(14.dp))
+            RiseIn(delayMillis = 40) {
+                DevelopBanner(
+                    group = group,
+                    developerName = developerName,
+                    onDevelop = onDevelop,
+                    onSaveRoll = onSaveRoll
+                )
             }
         }
 

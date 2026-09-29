@@ -35,13 +35,27 @@ object Limits {
     /** Photos fetched per page in the timeline. */
     const val PHOTO_PAGE_SIZE = 60
 
-    /** Longest edge of the uploaded full-size image, in pixels. */
-    const val FULL_IMAGE_MAX_EDGE = 2560
+    /** Longest edge of the uploaded full-size image in a free roll, in pixels. */
+    const val FULL_IMAGE_MAX_EDGE = 2048
+
+    /**
+     * A developed roll keeps (close to) the original: 4096 px is a 12 MP frame, and
+     * at quality 92 it still sits well under the bucket's 15 MB object limit.
+     */
+    const val DEVELOPED_IMAGE_MAX_EDGE = 4096
+    const val DEVELOPED_IMAGE_QUALITY = 92
+
+    /**
+     * Exposures a free roll holds. Storage is the one real cost of running WeWere,
+     * so this is where the free tier stops and "Develop" begins. Mirrored in
+     * firestore.rules.
+     */
+    const val FREE_ROLL_PHOTO_LIMIT = 200
 
     /** Longest edge of the grid thumbnail. */
     const val THUMBNAIL_MAX_EDGE = 480
 
-    const val FULL_IMAGE_QUALITY = 88
+    const val FULL_IMAGE_QUALITY = 86
     const val THUMBNAIL_QUALITY = 75
 
     const val MAX_CAPTION_LENGTH = 140

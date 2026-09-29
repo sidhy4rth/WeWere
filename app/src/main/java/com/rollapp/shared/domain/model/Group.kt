@@ -1,5 +1,7 @@
 package com.rollapp.shared.domain.model
 
+import com.rollapp.shared.core.Limits
+
 /** A private shared camera roll. Mirrors `groups/{groupId}`. */
 data class Group(
     val id: String = "",
@@ -15,9 +17,23 @@ data class Group(
     /** Null means the invite never expires. */
     val inviteExpiresAt: Long? = null,
     /** Denormalised avatars for the home card, so it renders without N extra reads. */
-    val recentMemberPhotos: List<String> = emptyList()
+    val recentMemberPhotos: List<String> = emptyList(),
+    /**
+     * A developed roll has been paid for: no exposure limit, near-original quality
+     * and a whole-roll download for every member. Only the server sets it, after
+     * checking the purchase with RevenueCat; the rules refuse it from any client.
+     */
+    val developed: Boolean = false,
+    val developedBy: String? = null,
+    val developedAt: Long? = null
 ) {
     val inviteLink: String get() = "https://$INVITE_HOST/join/$inviteCode"
+
+    /** Exposures left before a free roll is full. Null once developed. */
+    val exposuresLeft: Int?
+        get() = if (developed) null else (Limits.FREE_ROLL_PHOTO_LIMIT - photoCount).coerceAtLeast(0)
+
+    val isFull: Boolean get() = exposuresLeft == 0
 
     val isInviteActive: Boolean
         get() = inviteCode.isNotBlank() &&

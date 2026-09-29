@@ -67,6 +67,21 @@ service cloud.firestore {
                .hasOnly([request.auth.uid]);
     }
 
+    // Fields that only the develop endpoint (site/api/develop.js, Admin SDK) may
+    // write. A developed roll is a paid-for roll, so no client — not even the
+    // roll's own admin — can set, change or clear them.
+    function developKeys() {
+      return ['developed', 'developedBy', 'developedAt', 'developedVia'];
+    }
+
+    // Free rolls hold FREE_ROLL_PHOTO_LIMIT exposures (core/Constants.kt); a
+    // developed roll has no limit. photoCount is kept by the clients themselves, so
+    // this is a product limit rather than a hard security boundary.
+    function rollHasRoom(groupId) {
+      let group = get(/databases/$(database)/documents/groups/$(groupId)).data;
+      return group.get('developed', false) == true || group.get('photoCount', 0) < 200;
+    }
+
     // ------------------------------------------------------------------ users
 
     match /users/{userId} {
@@ -116,11 +131,12 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.memberCount == 1
-        && request.resource.data.photoCount == 0;
+        && request.resource.data.photoCount == 0
+        && !request.resource.data.keys().hasAny(developKeys());
 
       allow update: if
-        // Admins may edit the group's identity.
-        isAdmin(groupId)
+        // Admins may edit the group's identity — but never whether it is developed.
+        (isAdmin(groupId) && !changedKeys().hasAny(developKeys()))
 
         // Members maintain the denormalised counters as they add photos.
         || (isMember(groupId)
@@ -187,7 +203,8 @@ service cloud.firestore {
         allow read: if isMember(groupId);
 
         allow create: if isMember(groupId)
-          && request.resource.data.uploadedBy == request.auth.uid;
+          && request.resource.data.uploadedBy == request.auth.uid
+          && rollHasRoom(groupId);
 
         allow update: if
           // The uploader may edit their own caption.
@@ -227,6 +244,14 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isAdmin(groupId);
       }
+    }
+
+    // ------------------------------------------------------------ redemptions
+
+    // One document per store transaction already spent on developing a roll, so a
+    // single purchase can never develop two. Server-only.
+    match /redemptions/{transactionId} {
+      allow read, write: if false;
     }
 
     // ---------------------------------------------------------------- reports

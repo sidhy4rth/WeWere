@@ -26,6 +26,7 @@ googleid = "1.1.1"
 accompanist = "0.36.0"
 serialization = "1.7.3"
 exifinterface = "1.3.7"
+revenuecat = "10.23.4"
 splashscreen = "1.0.1"
 junit = "4.13.2"
 androidxJunit = "1.2.1"
@@ -93,6 +94,8 @@ androidx-credentials-play-auth = { group = "androidx.credentials", name = "crede
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+# In-app purchases. 10.x is built against Kotlin 2.0.21, the same as this project.
+revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }

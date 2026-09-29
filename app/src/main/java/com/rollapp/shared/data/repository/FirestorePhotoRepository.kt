@@ -316,6 +316,12 @@ class FirestorePhotoRepository @Inject constructor(
         else Outcome.Success(saved)
     }
 
+    override suspend fun fetchAllPhotos(groupId: String): Outcome<List<Photo>> = firebaseCall {
+        photos(groupId).orderBy("createdAt", Query.Direction.DESCENDING)
+            .get().await()
+            .documents.mapNotNull { it.toPhoto(groupId) }
+    }
+
     override suspend fun deletePhotos(groupId: String, photoIds: List<String>): Outcome<Int> {
         if (photoIds.isEmpty()) return Outcome.Success(0)
 

@@ -88,7 +88,10 @@ fun DocumentSnapshot.toGroup(): Group? {
         lastActivityAt = millis("lastActivityAt"),
         inviteCode = str("inviteCode").orEmpty(),
         inviteExpiresAt = millisOrNull("inviteExpiresAt"),
-        recentMemberPhotos = stringList("recentMemberPhotos")
+        recentMemberPhotos = stringList("recentMemberPhotos"),
+        developed = getBoolean("developed") == true,
+        developedBy = str("developedBy"),
+        developedAt = millisOrNull("developedAt")
     )
 }
 

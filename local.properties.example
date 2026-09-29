@@ -16,6 +16,10 @@ SUPABASE_ANON_KEY=
 # Bucket name created by supabase/storage-policies.sql. Only change if you renamed it there.
 SUPABASE_BUCKET=roll
 
+# RevenueCat -> Project -> API keys (the public SDK key, not a secret key).
+# Leave empty and the Develop sheet says purchases are unavailable.
+REVENUECAT_API_KEY=
+
 # Release signing (optional; the debug build needs none of this).
 #   keytool -genkeypair -keystore keystore/wewere-release.jks -alias wewere -keyalg RSA -keysize 2048 -validity 10000
 # keystore/ is git-ignored. Back the file and passwords up — they cannot be recovered.

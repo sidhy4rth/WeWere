@@ -494,6 +494,66 @@ await test("push coalescing windows are unreachable from a client", async () => 
   await assertFails(setDoc(doc(alice(), `groups/${GROUP}/notifyWindows/${ALICE}`), { count: 1 }));
 });
 
+// ------------------------------------------------------------------- develop
+
+console.log("\ndeveloped rolls");
+
+await test("a new group cannot be created already developed", async () => {
+  await seedBase();
+  await assertFails(setDoc(doc(alice(), "groups/g4"), {
+    name: "x", createdBy: ALICE, memberCount: 1, photoCount: 0, developed: true,
+  }));
+});
+
+await test("an admin cannot develop their own roll", async () => {
+  await seedTwoMembers();
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}`), { developed: true }));
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}`), {
+    name: "Goa", developedBy: ALICE,
+  }));
+});
+
+await test("a member cannot develop the roll", async () => {
+  await seedTwoMembers();
+  await assertFails(updateDoc(doc(bob(), `groups/${GROUP}`), { developed: true }));
+});
+
+await test("an admin cannot un-develop a roll someone paid for", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { developed: true, developedBy: BOB });
+  });
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}`), { developed: false }));
+  // ...while ordinary admin edits still work on a developed roll.
+  await assertSucceeds(updateDoc(doc(alice(), `groups/${GROUP}`), { name: "Goa 2026" }));
+});
+
+await test("a full free roll refuses another photo", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { photoCount: 200 });
+  });
+  await assertFails(setDoc(doc(bob(), `groups/${GROUP}/photos/p9`), {
+    uploadedBy: BOB, imageUrl: "u", createdAt: serverTimestamp(),
+  }));
+});
+
+await test("a developed roll takes photos past the free limit", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { photoCount: 500, developed: true });
+  });
+  await assertSucceeds(setDoc(doc(bob(), `groups/${GROUP}/photos/p9`), {
+    uploadedBy: BOB, imageUrl: "u", createdAt: serverTimestamp(),
+  }));
+});
+
+await test("redemptions are unreachable from a client", async () => {
+  await seedTwoMembers();
+  await assertFails(getDoc(doc(alice(), "redemptions/tx1")));
+  await assertFails(setDoc(doc(alice(), "redemptions/tx1"), { groupId: GROUP }));
+});
+
 await env.cleanup();
 
 console.log(`\n${passed} passed, ${failed} failed\n`);

@@ -1,0 +1,9 @@
+{
+  "name": "wewere-site",
+  "private": true,
+  "description": "Landing page, invite links, and the /api/develop function.",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "firebase-admin": "^14.5.0"
+  }
+}
