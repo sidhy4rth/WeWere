@@ -79,7 +79,8 @@ import com.rollapp.shared.ui.theme.Surface
 import kotlinx.coroutines.delay
 
 /**
- * "Develop this roll" — the one place WeWere asks for money.
+ * "Go Exclusive" — the one place WeWere asks for money. (Internally a paid roll is
+ * still "developed": the Firestore field, the product id and the endpoint keep it.)
  *
  * The pitch is the film metaphor the app already speaks: a free roll is a roll of
  * 200 exposures; developing it finishes it properly, for everyone in it. One person
@@ -125,24 +126,24 @@ fun DevelopSheet(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Readout(
                         text = when {
-                            group.isEarlyRoll -> "Early roll · no exposure limit"
-                            group.isFull -> "Roll full · ${group.photoCount} exposures"
-                            else -> "${group.exposuresLeft} exposures left"
+                            group.isEarlyRoll -> "Early roll · no photo limit"
+                            group.isFull -> "Roll full · ${group.photoCount} photos"
+                            else -> "${group.exposuresLeft} photos left"
                         },
                         color = Gold
                     )
                     Text(
-                        text = if (group.isFull) "This roll is full." else "Develop this roll.",
+                        text = if (group.isFull) "This roll is full." else "Go Exclusive.",
                         style = MaterialTheme.typography.headlineLarge,
                         color = Ivory
                     )
                     Text(
                         text = if (group.isEarlyRoll) {
-                            "“${group.name}” is an early roll, so it keeps unlimited exposures. " +
-                                "Develop it for full quality and a whole-roll save — for everyone in it."
+                            "“${group.name}” is an early roll, so it already has no photo limit. " +
+                                "Make it Exclusive for full quality and a whole-roll save — for everyone in it."
                         } else {
-                            "Free rolls hold ${group.exposureLimit ?: Limits.FREE_ROLL_PHOTO_LIMIT} exposures. Develop " +
-                                "“${group.name}” once and it's finished properly — for everyone in it."
+                            "Free rolls hold ${group.exposureLimit ?: Limits.FREE_ROLL_PHOTO_LIMIT} photos. Make " +
+                                "“${group.name}” Exclusive once and everyone in it gets the upgrade."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = IvoryMuted
@@ -155,11 +156,11 @@ fun DevelopSheet(
             RiseIn(delayMillis = 80) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     if (!group.isEarlyRoll) {
-                        Perk(Icons.Rounded.AllInclusive, "Unlimited exposures", "Keep shooting — no ceiling on the roll")
+                        Perk(Icons.Rounded.AllInclusive, "Unlimited photos", "Keep adding — no ceiling on the roll")
                     }
                     Perk(Icons.Rounded.HighQuality, "Near-original quality", "Up to 12 MP per photo, not 4")
                     Perk(Icons.Rounded.Download, "Save the whole roll", "Anyone in it can keep every photo, in one tap")
-                    Perk(Icons.Rounded.AutoAwesome, "A gold seal", "Everyone sees who developed it")
+                    Perk(Icons.Rounded.AutoAwesome, "The Exclusive seal", "Everyone sees who made it Exclusive")
                 }
             }
 
@@ -182,7 +183,7 @@ fun DevelopSheet(
                             title = "This roll",
                             offer = state.offers.singleRoll,
                             cadence = "one-time",
-                            note = "Develops “${group.name}”",
+                            note = "Makes “${group.name}” Exclusive",
                             selected = state.selected == DevelopPlan.SINGLE_ROLL,
                             badge = null,
                             onClick = { viewModel.select(DevelopPlan.SINGLE_ROLL) },
@@ -192,7 +193,7 @@ fun DevelopSheet(
                             title = "WeWere Gold",
                             offer = state.offers.gold,
                             cadence = "a month",
-                            note = "Every roll you develop",
+                            note = "Every roll you make Exclusive",
                             selected = state.selected == DevelopPlan.GOLD,
                             badge = if (state.hasGold) "Active" else "Best value",
                             onClick = { viewModel.select(DevelopPlan.GOLD) },
@@ -209,10 +210,10 @@ fun DevelopSheet(
                 }
                 GoldButton(
                     text = when {
-                        state.selected == DevelopPlan.GOLD && state.hasGold -> "Develop with Gold"
-                        selectedOffer == null -> "Develop"
+                        state.selected == DevelopPlan.GOLD && state.hasGold -> "Go Exclusive with Gold"
+                        selectedOffer == null -> "Go Exclusive"
                         state.selected == DevelopPlan.GOLD -> "Start Gold · ${selectedOffer.price}"
-                        else -> "Develop for ${selectedOffer.price}"
+                        else -> "Go Exclusive · ${selectedOffer.price}"
                     },
                     onClick = { activity?.let(viewModel::develop) },
                     enabled = activity != null && (selectedOffer != null || state.hasGold),
@@ -223,7 +224,7 @@ fun DevelopSheet(
 
                 val status = when (state.step) {
                     DevelopStep.PURCHASING -> "Waiting for the store…"
-                    DevelopStep.DEVELOPING -> "Developing…"
+                    DevelopStep.DEVELOPING -> "Making it Exclusive…"
                     DevelopStep.RESTORING -> "Restoring purchases…"
                     null -> null
                 }
@@ -346,7 +347,7 @@ fun DevelopBanner(
             Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = Gold, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Readout("Developed", color = Gold)
+                Readout("Exclusive", color = Gold)
                 Text(
                     text = developerName?.let { "by $it · unlimited, full quality" } ?: "Unlimited, full quality",
                     style = MaterialTheme.typography.bodySmall,
@@ -377,8 +378,8 @@ fun DevelopBanner(
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Readout("Early roll · unlimited", modifier = Modifier.weight(1f))
-            Text("Develop →", style = MaterialTheme.typography.titleSmall, color = Gold)
+            Readout("Early roll · no photo limit", modifier = Modifier.weight(1f))
+            Text("Go Exclusive →", style = MaterialTheme.typography.titleSmall, color = Gold)
         }
     } else {
         val limit = group.exposureLimit ?: Limits.FREE_ROLL_PHOTO_LIMIT
@@ -398,12 +399,12 @@ fun DevelopBanner(
                 Readout(
                     text = when {
                         left == 0 -> "Roll full"
-                        else -> "$left of $limit exposures left"
+                        else -> "$left of $limit photos left"
                     },
                     color = if (urgent) Gold else Muted,
                     modifier = Modifier.weight(1f)
                 )
-                Text("Develop →", style = MaterialTheme.typography.titleSmall, color = Gold)
+                Text("Go Exclusive →", style = MaterialTheme.typography.titleSmall, color = Gold)
             }
             // The film counter: a hairline that fills with gold as the roll is used.
             Box(
@@ -480,7 +481,7 @@ fun DevelopedReveal(
                 }
                 Spacer(Modifier.height(36.dp))
                 RiseIn(delayMillis = 900) {
-                    Text("Developed.", style = MaterialTheme.typography.displayLarge, color = Gold)
+                    Text("Exclusive.", style = MaterialTheme.typography.displayLarge, color = Gold)
                 }
                 Spacer(Modifier.height(10.dp))
                 RiseIn(delayMillis = 1200) {

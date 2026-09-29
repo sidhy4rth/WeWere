@@ -107,7 +107,7 @@ module.exports = async (req, res) => {
   }
 
   const candidates = singleRollPurchases(sub);
-  if (!candidates.length) return fail(res, 402, "No purchase found to develop this roll");
+  if (!candidates.length) return fail(res, 402, "No purchase found for this roll");
 
   try {
     const via = await db.runTransaction(async (tx) => {
@@ -129,10 +129,10 @@ module.exports = async (req, res) => {
       return "single";
     });
 
-    if (via === null) return fail(res, 402, "Every purchase on this account has already developed a roll");
+    if (via === null) return fail(res, 402, "Every purchase on this account is already used on another roll");
     return res.status(200).json({ developed: true, via });
   } catch (error) {
     console.error(error);
-    return fail(res, 500, "Couldn't develop the roll. Try again.");
+    return fail(res, 500, "Couldn't make the roll Exclusive. Try again.");
   }
 };

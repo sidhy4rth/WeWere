@@ -106,7 +106,7 @@ class DevelopViewModel @Inject constructor(
                 is Outcome.Success -> if (second.data) done() else fail(
                     // The store took the payment but RevenueCat hasn't told the server
                     // yet. The purchase is safe; the next tap will find it.
-                    AppError.Validation("Payment received — give it a moment, then tap Develop again")
+                    AppError.Validation("Payment received — give it a moment, then tap Go Exclusive again")
                 )
             }
         }

@@ -139,7 +139,7 @@ class RevenueCatBillingRepository @Inject constructor(
                         401 -> AppError.NotAuthenticated
                         403 -> AppError.PermissionDenied
                         404 -> AppError.GroupNotFound
-                        else -> AppError.Validation(message ?: "Couldn't develop the roll")
+                        else -> AppError.Validation(message ?: "Couldn't make the roll Exclusive")
                     }
                 )
             }

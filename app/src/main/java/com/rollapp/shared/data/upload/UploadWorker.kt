@@ -368,7 +368,7 @@ class UploadWorker @AssistedInject constructor(
         private const val NOTIFICATION_ID = 4201
         private const val TAG = "UploadWorker"
         private const val BATCH_SIZE = 8
-        const val ROLL_FULL = "This roll is full — develop it to keep shooting"
+        const val ROLL_FULL = "This roll is full — go Exclusive to keep adding photos"
 
         /** Must match where FirestorePhotoRepository.stageLocally writes. */
         const val STAGING_DIR = "upload_queue"
