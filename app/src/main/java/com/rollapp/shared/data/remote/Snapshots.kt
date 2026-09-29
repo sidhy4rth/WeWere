@@ -91,7 +91,8 @@ fun DocumentSnapshot.toGroup(): Group? {
         recentMemberPhotos = stringList("recentMemberPhotos"),
         developed = getBoolean("developed") == true,
         developedBy = str("developedBy"),
-        developedAt = millisOrNull("developedAt")
+        developedAt = millisOrNull("developedAt"),
+        exposureLimit = (get("exposureLimit") as? Number)?.toInt()
     )
 }
 

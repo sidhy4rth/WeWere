@@ -1,6 +1,5 @@
 package com.rollapp.shared.domain.model
 
-import com.rollapp.shared.core.Limits
 
 /** A private shared camera roll. Mirrors `groups/{groupId}`. */
 data class Group(
@@ -25,13 +24,22 @@ data class Group(
      */
     val developed: Boolean = false,
     val developedBy: String? = null,
-    val developedAt: Long? = null
+    val developedAt: Long? = null,
+    /**
+     * Exposures this roll holds before it must be developed. Null for rolls made
+     * before the limit existed — those were promised unlimited and keep it.
+     */
+    val exposureLimit: Int? = null
 ) {
     val inviteLink: String get() = "https://$INVITE_HOST/join/$inviteCode"
 
-    /** Exposures left before a free roll is full. Null once developed. */
+    /** Exposures left before a free roll is full. Null when there is no limit. */
     val exposuresLeft: Int?
-        get() = if (developed) null else (Limits.FREE_ROLL_PHOTO_LIMIT - photoCount).coerceAtLeast(0)
+        get() = if (developed || exposureLimit == null) null
+        else (exposureLimit - photoCount).coerceAtLeast(0)
+
+    /** An undeveloped roll from before the exposure limit: unlimited, but still developable. */
+    val isEarlyRoll: Boolean get() = !developed && exposureLimit == null
 
     val isFull: Boolean get() = exposuresLeft == 0
 

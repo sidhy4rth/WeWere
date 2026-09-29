@@ -155,7 +155,9 @@ class UploadWorker @AssistedInject constructor(
             }.getOrNull()
             val developed = group?.getBoolean("developed") == true
             val photoCount = group?.getLong("photoCount") ?: 0L
-            if (!developed && photoCount >= Limits.FREE_ROLL_PHOTO_LIMIT) {
+            // Rolls from before the limit carry no exposureLimit and are never full.
+            val limit = group?.getLong("exposureLimit")
+            if (!developed && limit != null && photoCount >= limit) {
                 return UploadOutcome.Permanent(ROLL_FULL)
             }
 

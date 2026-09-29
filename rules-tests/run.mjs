@@ -15,7 +15,7 @@ import {
 import { readFileSync } from "node:fs";
 import {
   doc, setDoc, getDoc, deleteDoc, updateDoc, writeBatch,
-  collection, getDocs, serverTimestamp, increment, arrayUnion, arrayRemove,
+  collection, getDocs, serverTimestamp, increment, arrayUnion, arrayRemove, deleteField,
 } from "firebase/firestore";
 
 const PROJECT = "roll-rules-test";
@@ -531,7 +531,7 @@ await test("an admin cannot un-develop a roll someone paid for", async () => {
 await test("a full free roll refuses another photo", async () => {
   await seedTwoMembers();
   await env.withSecurityRulesDisabled(async (ctx) => {
-    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { photoCount: 200 });
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { photoCount: 200, exposureLimit: 200 });
   });
   await assertFails(setDoc(doc(bob(), `groups/${GROUP}/photos/p9`), {
     uploadedBy: BOB, imageUrl: "u", createdAt: serverTimestamp(),
@@ -546,6 +546,43 @@ await test("a developed roll takes photos past the free limit", async () => {
   await assertSucceeds(setDoc(doc(bob(), `groups/${GROUP}/photos/p9`), {
     uploadedBy: BOB, imageUrl: "u", createdAt: serverTimestamp(),
   }));
+});
+
+await test("a free roll under its limit takes a photo", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { photoCount: 199, exposureLimit: 200 });
+  });
+  await assertSucceeds(setDoc(doc(bob(), `groups/${GROUP}/photos/p9`), {
+    uploadedBy: BOB, imageUrl: "u", createdAt: serverTimestamp(),
+  }));
+});
+
+await test("an early roll (no exposureLimit) stays unlimited past 200", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { photoCount: 850 });
+  });
+  await assertSucceeds(setDoc(doc(bob(), `groups/${GROUP}/photos/p9`), {
+    uploadedBy: BOB, imageUrl: "u", createdAt: serverTimestamp(),
+  }));
+});
+
+await test("an admin cannot raise or remove the exposure limit", async () => {
+  await seedTwoMembers();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), `groups/${GROUP}`), { exposureLimit: 200 });
+  });
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}`), { exposureLimit: 100000 }));
+  await assertFails(updateDoc(doc(alice(), `groups/${GROUP}`), { exposureLimit: deleteField() }));
+});
+
+await test("a new roll can start with the 200 limit, or none (older app), but no other", async () => {
+  await seedBase();
+  const base = { name: "x", createdBy: ALICE, memberCount: 1, photoCount: 0 };
+  await assertSucceeds(setDoc(doc(alice(), "groups/g5"), { ...base, exposureLimit: 200 }));
+  await assertSucceeds(setDoc(doc(alice(), "groups/g6"), base));
+  await assertFails(setDoc(doc(alice(), "groups/g7"), { ...base, exposureLimit: 5000 }));
 });
 
 await test("redemptions are unreachable from a client", async () => {

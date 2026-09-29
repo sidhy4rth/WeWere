@@ -124,8 +124,11 @@ fun DevelopSheet(
             RiseIn {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Readout(
-                        text = if (group.isFull) "${Limits.FREE_ROLL_PHOTO_LIMIT} of ${Limits.FREE_ROLL_PHOTO_LIMIT} exposures"
-                        else "${group.exposuresLeft} exposures left",
+                        text = when {
+                            group.isEarlyRoll -> "Early roll · no exposure limit"
+                            group.isFull -> "Roll full · ${group.photoCount} exposures"
+                            else -> "${group.exposuresLeft} exposures left"
+                        },
                         color = Gold
                     )
                     Text(
@@ -134,8 +137,13 @@ fun DevelopSheet(
                         color = Ivory
                     )
                     Text(
-                        text = "Free rolls hold ${Limits.FREE_ROLL_PHOTO_LIMIT} exposures. Develop " +
-                            "“${group.name}” once and it's finished properly — for everyone in it.",
+                        text = if (group.isEarlyRoll) {
+                            "“${group.name}” is an early roll, so it keeps unlimited exposures. " +
+                                "Develop it for full quality and a whole-roll save — for everyone in it."
+                        } else {
+                            "Free rolls hold ${group.exposureLimit ?: Limits.FREE_ROLL_PHOTO_LIMIT} exposures. Develop " +
+                                "“${group.name}” once and it's finished properly — for everyone in it."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = IvoryMuted
                     )
@@ -146,7 +154,9 @@ fun DevelopSheet(
 
             RiseIn(delayMillis = 80) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Perk(Icons.Rounded.AllInclusive, "Unlimited exposures", "Keep shooting — no ceiling on the roll")
+                    if (!group.isEarlyRoll) {
+                        Perk(Icons.Rounded.AllInclusive, "Unlimited exposures", "Keep shooting — no ceiling on the roll")
+                    }
                     Perk(Icons.Rounded.HighQuality, "Near-original quality", "Up to 12 MP per photo, not 4")
                     Perk(Icons.Rounded.Download, "Save the whole roll", "Anyone in it can keep every photo, in one tap")
                     Perk(Icons.Rounded.AutoAwesome, "A gold seal", "Everyone sees who developed it")
@@ -356,9 +366,24 @@ fun DevelopBanner(
                 Text("Save roll", style = MaterialTheme.typography.titleSmall, color = Gold)
             }
         }
+    } else if (group.isEarlyRoll) {
+        // No counter to show: the pitch is quality and the whole-roll save.
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .border(1.dp, Gold.copy(alpha = 0.25f), shape)
+                .clickable(onClick = onDevelop)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Readout("Early roll · unlimited", modifier = Modifier.weight(1f))
+            Text("Develop →", style = MaterialTheme.typography.titleSmall, color = Gold)
+        }
     } else {
+        val limit = group.exposureLimit ?: Limits.FREE_ROLL_PHOTO_LIMIT
         val left = group.exposuresLeft ?: 0
-        val used = (Limits.FREE_ROLL_PHOTO_LIMIT - left).toFloat() / Limits.FREE_ROLL_PHOTO_LIMIT
+        val used = (limit - left).toFloat() / limit
         val urgent = left <= LOW_EXPOSURES
         Column(
             modifier = modifier
@@ -373,7 +398,7 @@ fun DevelopBanner(
                 Readout(
                     text = when {
                         left == 0 -> "Roll full"
-                        else -> "$left of ${Limits.FREE_ROLL_PHOTO_LIMIT} exposures left"
+                        else -> "$left of $limit exposures left"
                     },
                     color = if (urgent) Gold else Muted,
                     modifier = Modifier.weight(1f)

@@ -168,6 +168,9 @@ class FirestoreGroupRepository @Inject constructor(
                     "lastActivityAt" to FieldValue.serverTimestamp(),
                     "memberCount" to 1,
                     "photoCount" to 0,
+                    // New rolls are free rolls with an exposure limit; rolls created
+                    // before the limit existed have no such field and stay unlimited.
+                    "exposureLimit" to Limits.FREE_ROLL_PHOTO_LIMIT,
                     "inviteCode" to code,
                     "inviteExpiresAt" to null,
                     "recentMemberPhotos" to listOfNotNull(photoUrl)
@@ -237,7 +240,8 @@ class FirestoreGroupRepository @Inject constructor(
                 photoCount = 0,
                 lastActivityAt = now,
                 inviteCode = code,
-                recentMemberPhotos = listOfNotNull(photoUrl)
+                recentMemberPhotos = listOfNotNull(photoUrl),
+                exposureLimit = Limits.FREE_ROLL_PHOTO_LIMIT
             )
         }
     }

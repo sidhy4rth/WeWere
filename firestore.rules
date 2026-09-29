@@ -74,12 +74,20 @@ service cloud.firestore {
       return ['developed', 'developedBy', 'developedAt', 'developedVia'];
     }
 
-    // Free rolls hold FREE_ROLL_PHOTO_LIMIT exposures (core/Constants.kt); a
-    // developed roll has no limit. photoCount is kept by the clients themselves, so
-    // this is a product limit rather than a hard security boundary.
+    // ...plus the roll's exposure limit, which no admin may raise or remove.
+    function lockedKeys() {
+      return developKeys().concat(['exposureLimit']);
+    }
+
+    // New rolls carry exposureLimit (FREE_ROLL_PHOTO_LIMIT in core/Constants.kt).
+    // Rolls created before it existed have none and stay unlimited, as promised;
+    // a developed roll has no limit either. photoCount is kept by the clients
+    // themselves, so this is a product limit rather than a hard security boundary.
     function rollHasRoom(groupId) {
       let group = get(/databases/$(database)/documents/groups/$(groupId)).data;
-      return group.get('developed', false) == true || group.get('photoCount', 0) < 200;
+      return group.get('developed', false) == true
+        || !('exposureLimit' in group)
+        || group.get('photoCount', 0) < group.exposureLimit;
     }
 
     // ------------------------------------------------------------------ users
@@ -132,11 +140,13 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.memberCount == 1
         && request.resource.data.photoCount == 0
-        && !request.resource.data.keys().hasAny(developKeys());
+        && !request.resource.data.keys().hasAny(developKeys())
+        // Older app versions create rolls without a limit; newer ones must use 200.
+        && request.resource.data.get('exposureLimit', 200) == 200;
 
       allow update: if
         // Admins may edit the group's identity — but never whether it is developed.
-        (isAdmin(groupId) && !changedKeys().hasAny(developKeys()))
+        (isAdmin(groupId) && !changedKeys().hasAny(lockedKeys()))
 
         // Members maintain the denormalised counters as they add photos.
         || (isMember(groupId)
