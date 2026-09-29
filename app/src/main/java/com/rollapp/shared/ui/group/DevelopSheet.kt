@@ -246,6 +246,15 @@ fun DevelopSheet(
             }
 
             Spacer(Modifier.height(4.dp))
+            if (state.isDemo) {
+                // Honest about the demo: nobody should think they were charged.
+                Readout(
+                    text = "Demo store · purchases are simulated · no real charge",
+                    color = Gold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                )
+            }
             Readout(
                 text = "One person pays · everyone in the roll gets it",
                 textAlign = TextAlign.Center,

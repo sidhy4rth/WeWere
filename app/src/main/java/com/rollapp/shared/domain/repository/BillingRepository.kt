@@ -18,6 +18,9 @@ interface BillingRepository {
     /** False when this build has no usable store key; the UI says so instead of failing. */
     val isAvailable: Boolean
 
+    /** True on RevenueCat's Test Store: the full flow runs, purchases are simulated. */
+    val isDemo: Boolean
+
     /** Whether the signed-in user holds an active Gold subscription. */
     val hasGold: StateFlow<Boolean>
 

@@ -31,6 +31,13 @@ val supabaseBucket: String = localProps.getProperty("SUPABASE_BUCKET") ?: "roll"
 // configures purchases in release when the key is a real store key.
 val revenueCatApiKey: String = localProps.getProperty("REVENUECAT_API_KEY") ?: ""
 
+// Demo mode: until WeWere has a Play Store listing there is no real store to sell
+// through, so the public APK runs on RevenueCat's Test Store — purchases are
+// simulated, nothing is charged. The SDK refuses a Test Store key unless the app is
+// debuggable (ApplicationInfo.FLAG_DEBUGGABLE), so a release build is marked
+// debuggable only while it carries a test key. A real store key turns this off.
+val revenueCatDemo: Boolean = revenueCatApiKey.startsWith("test_")
+
 // Point a debug build at a local Firebase Emulator Suite instead of a real project.
 // Set USE_FIREBASE_EMULATOR=true in local.properties to try the app end to end
 // without creating a Firebase project at all.
@@ -47,8 +54,8 @@ android {
         applicationId = "com.rollapp.shared"
         minSdk = 24
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -58,6 +65,7 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
         buildConfigField("String", "SUPABASE_BUCKET", "\"$supabaseBucket\"")
         buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
+        buildConfigField("boolean", "REVENUECAT_DEMO", "$revenueCatDemo")
     }
 
     // Release signing comes from local.properties (git-ignored). Without it the release
@@ -85,6 +93,7 @@ android {
             // A release build never talks to an emulator, whatever local.properties says.
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
             buildConfigField("String", "EMULATOR_HOST", "\"\"")
+            isDebuggable = revenueCatDemo
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

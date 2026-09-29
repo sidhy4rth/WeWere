@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 
 data class DevelopUiState(
     val isAvailable: Boolean = false,
+    val isDemo: Boolean = false,
     val offers: DevelopOffers = DevelopOffers(),
     val loadingOffers: Boolean = false,
     val hasGold: Boolean = false,
@@ -49,7 +50,9 @@ class DevelopViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val groupId: String = checkNotNull(savedStateHandle[NavArgs.GROUP_ID])
-    private val local = MutableStateFlow(DevelopUiState(isAvailable = billing.isAvailable))
+    private val local = MutableStateFlow(
+        DevelopUiState(isAvailable = billing.isAvailable, isDemo = billing.isDemo)
+    )
 
     val state: StateFlow<DevelopUiState> = combine(local, billing.hasGold) { s, gold ->
         s.copy(hasGold = gold)

@@ -66,10 +66,13 @@ class RevenueCatBillingRepository @Inject constructor(
 
     private val apiKey = BuildConfig.REVENUECAT_API_KEY
 
-    // A Test Store key crashes the SDK in a release build by design, so a release
-    // build only takes a real store key.
+    // The SDK deliberately crashes on a Test Store key unless the app is debuggable,
+    // so this applies exactly the SDK's own test — never BuildConfig.DEBUG, which a
+    // demo release build (debuggable, see app/build.gradle.kts) would get wrong.
     override val isAvailable: Boolean =
-        apiKey.isNotBlank() && (BuildConfig.DEBUG || !apiKey.startsWith(TEST_KEY_PREFIX))
+        apiKey.isNotBlank() && (!apiKey.startsWith(TEST_KEY_PREFIX) || context.isDebuggable())
+
+    override val isDemo: Boolean = isAvailable && apiKey.startsWith(TEST_KEY_PREFIX)
 
     private val gold = MutableStateFlow(false)
     override val hasGold: StateFlow<Boolean> = gold.asStateFlow()
@@ -212,6 +215,9 @@ class RevenueCatBillingRepository @Inject constructor(
     private fun serverMessage(body: String): String? = runCatching {
         Json.parseToJsonElement(body).let { it as JsonObject }["message"]?.jsonPrimitive?.content
     }.getOrNull()
+
+    private fun Context.isDebuggable() =
+        applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
 
     private class BillingUnavailable(message: String) : Exception(message)
 
