@@ -188,7 +188,7 @@ class UploadWorker @AssistedInject constructor(
                     val thumb = imageStore.upload(thumbPath, processed.thumbnail.bytes) { fraction ->
                         progress.trySend(fraction * THUMB_SHARE)
                     }
-                    val full = imageStore.upload(fullPath, processed.full.bytes) { fraction ->
+                    val full = imageStore.upload(fullPath, processed.full.bytes, processed.full.contentType) { fraction ->
                         progress.trySend(THUMB_SHARE + fraction * (1f - THUMB_SHARE))
                     }
                     thumb to full
@@ -304,6 +304,8 @@ class UploadWorker @AssistedInject constructor(
             else -> when (t) {
                 is SecurityException ->
                     UploadOutcome.Permanent("WeWere lost access to that photo")
+                is IllegalStateException ->
+                    UploadOutcome.Permanent(t.message ?: "Couldn't read that image")
                 is java.io.FileNotFoundException ->
                     UploadOutcome.Permanent("That photo is no longer on this device")
                 else ->

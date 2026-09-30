@@ -122,7 +122,10 @@ fun GroupScreen(
     val haptics = LocalHapticFeedback.current
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var showDevelop by remember { mutableStateOf(false) }
-    val recordMoment = com.rollapp.shared.ui.moments.rememberMomentRecorder()
+    val momentsViewModel: com.rollapp.shared.ui.moments.MomentsViewModel = hiltViewModel()
+    val momentsState by momentsViewModel.state.collectAsStateWithLifecycle()
+    val recordMoment = com.rollapp.shared.ui.moments.rememberMomentRecorder(momentsViewModel)
+    val context = androidx.compose.ui.platform.LocalContext.current
     var revealing by remember { mutableStateOf(false) }
 
     val galleryPicker = rememberLauncherForActivityResult(
@@ -338,6 +341,17 @@ fun GroupScreen(
                             }
                         }
 
+                        if (momentsState.moments.isNotEmpty() && !state.filter.isActive) {
+                            item(span = { GridItemSpan(maxLineSpan) }, key = "moments-header") {
+                                SectionHeader("Moments · this week")
+                            }
+                            items(momentsState.moments, key = { "moment-${it.id}" }) { moment ->
+                                com.rollapp.shared.ui.moments.MomentTile(moment) {
+                                    com.rollapp.shared.ui.moments.playMoment(context, moment.videoUrl)
+                                }
+                            }
+                        }
+
                         state.timeline.forEach { entry ->
                             when (entry) {
                                 is TimelineItem.Header -> item(
@@ -421,36 +435,41 @@ fun GroupScreen(
                         .padding(top = 56.dp, bottom = 16.dp)
                         .navigationBarsPadding()
                 ) {
-                    Row(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RingButton(
-                            icon = Icons.Rounded.PhotoLibrary,
-                            contentDescription = "Upload from gallery",
-                            onClick = {
-                                if (rollFull) showDevelop = true
-                                else galleryPicker.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            }
-                        )
-                        Shutter(onClick = {
-                            if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
-                        })
-                        RingButton(
-                            icon = Icons.Rounded.People,
-                            contentDescription = "Members",
-                            onClick = { onOpenMembers(viewModel.groupId) }
-                        )
-                    }
-                    Box(Modifier.align(Alignment.CenterEnd).padding(end = 16.dp)) {
-                        RingButton(
-                            icon = Icons.Rounded.Videocam,
-                            contentDescription = "Record a 5-second moment",
-                            onClick = recordMoment
-                        )
+                    // Five equal slots: nothing can overlap on a narrow phone, and the
+                    // shutter in the middle slot is always dead centre.
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f))
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            RingButton(
+                                icon = Icons.Rounded.PhotoLibrary,
+                                contentDescription = "Upload from gallery",
+                                onClick = {
+                                    if (rollFull) showDevelop = true
+                                    else galleryPicker.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                }
+                            )
+                        }
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            Shutter(onClick = {
+                                if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
+                            })
+                        }
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            RingButton(
+                                icon = Icons.Rounded.People,
+                                contentDescription = "Members",
+                                onClick = { onOpenMembers(viewModel.groupId) }
+                            )
+                        }
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            RingButton(
+                                icon = Icons.Rounded.Videocam,
+                                contentDescription = "Record a 5-second moment",
+                                onClick = recordMoment
+                            )
+                        }
                     }
                 }
             }

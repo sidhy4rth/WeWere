@@ -107,7 +107,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = false
+        // java.time (moments, calendar) on Android 7.x, below its native API 26.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -165,6 +166,8 @@ dependencies {
     ksp(libs.hilt.ext.compiler)
 
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
+    implementation(libs.coil.video)
     implementation(libs.okhttp)
 
     implementation(libs.camerax.core)
@@ -193,6 +196,7 @@ dependencies {
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.exifinterface)
     implementation(libs.revenuecat)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.media3.transformer)
     implementation(libs.media3.effect)
     implementation(libs.media3.common)

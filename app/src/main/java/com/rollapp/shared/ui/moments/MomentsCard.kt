@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import coil.request.videoFrameMillis
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -102,18 +105,7 @@ fun MomentsCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.moments.forEach { m ->
-                    Circle(
-                        icon = Icons.Rounded.PlayArrow,
-                        contentDescription = "Play ${m.uploaderName}'s moment",
-                        filled = true
-                    ) { play(context, m.videoUrl) }
-                }
-            }
+            Spacer(Modifier.weight(1f))
             val reminder = state.reminderMinute
             Circle(
                 icon = Icons.Rounded.Alarm,
@@ -160,10 +152,47 @@ private fun Circle(icon: ImageVector, contentDescription: String, filled: Boolea
     }
 }
 
-private fun play(context: Context, url: String) {
+fun playMoment(context: Context, url: String) {
     runCatching {
         context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(url), "video/mp4"))
     }.onFailure { Toast.makeText(context, "No video player found", Toast.LENGTH_SHORT).show() }
+}
+
+/** A moment in the roll's grid: a frame from the clip, a play mark, who shot it. */
+@Composable
+fun MomentTile(moment: com.rollapp.shared.domain.model.Moment, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(10.dp))
+            .background(com.rollapp.shared.ui.theme.Raised)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        coil.compose.AsyncImage(
+            model = coil.request.ImageRequest.Builder(LocalContext.current)
+                .data(moment.videoUrl)
+                .videoFrameMillis(1000)
+                .build(),
+            contentDescription = "${moment.uploaderName}'s moment",
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier.matchParentSize()
+        )
+        Box(
+            Modifier.size(34.dp).clip(CircleShape).background(com.rollapp.shared.ui.theme.Ink.copy(alpha = 0.55f))
+                .border(1.dp, Gold, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Gold, modifier = Modifier.size(18.dp))
+        }
+        Text(
+            moment.uploaderName.substringBefore(" ") + " · 5s",
+            style = MaterialTheme.typography.labelSmall,
+            color = Ivory,
+            modifier = Modifier.align(Alignment.BottomStart).padding(6.dp)
+        )
+    }
 }
 
 /** The phone's own camera app, capped at 5 seconds, writing into our file. */

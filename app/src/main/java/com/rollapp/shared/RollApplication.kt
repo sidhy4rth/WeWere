@@ -62,6 +62,12 @@ class RollApplication : Application(), Configuration.Provider, ImageLoaderFactor
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
             .crossfade(true)
+            // Animated GIFs play in the roll; moments show a frame from the clip.
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) add(coil.decode.ImageDecoderDecoder.Factory())
+                else add(coil.decode.GifDecoder.Factory())
+                add(coil.decode.VideoFrameDecoder.Factory())
+            }
             .build()
 
     private fun createNotificationChannels() {

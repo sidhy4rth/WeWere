@@ -22,7 +22,8 @@ import kotlinx.coroutines.withContext
 data class ProcessedImage(
     val bytes: ByteArray,
     val width: Int,
-    val height: Int
+    val height: Int,
+    val contentType: String = "image/jpeg"
 ) {
     // ByteArray gives identity equals by default, which silently breaks any data
     // class holding one. Spell it out rather than leave a trap.
@@ -67,8 +68,13 @@ class ImageProcessor @Inject constructor(
         val maxEdge = if (developed) Limits.DEVELOPED_IMAGE_MAX_EDGE else Limits.FULL_IMAGE_MAX_EDGE
         val quality = if (developed) Limits.DEVELOPED_IMAGE_QUALITY else Limits.FULL_IMAGE_QUALITY
         val capturedAt = readCaptureTime(uri)
+        val header = context.contentResolver.openInputStream(uri)?.use { s -> ByteArray(8).also { s.read(it) } }
+        if (header != null && isTiff(header)) error("TIFF images aren't supported yet — save it as JPEG or PNG")
         val source = decodeScaled(uri, maxEdge)
             ?: error("Could not read that image")
+        // A GIF keeps its animation: the original file goes up untouched and only
+        // the thumbnail is a still of its first frame.
+        val gif = header != null && String(header, 0, 4, Charsets.US_ASCII) == "GIF8"
 
         try {
             val oriented = applyOrientation(uri, source)
@@ -76,7 +82,10 @@ class ImageProcessor @Inject constructor(
             val thumb = oriented.scaledTo(Limits.THUMBNAIL_MAX_EDGE)
 
             val result = ProcessedUpload(
-                full = full.toJpeg(quality),
+                full = if (gif) ProcessedImage(
+                    bytes = context.contentResolver.openInputStream(uri)!!.use { it.readBytes() },
+                    width = source.width, height = source.height, contentType = "image/gif"
+                ) else full.toJpeg(quality),
                 thumbnail = thumb.toJpeg(Limits.THUMBNAIL_QUALITY),
                 capturedAt = capturedAt
             )
@@ -123,6 +132,10 @@ class ImageProcessor @Inject constructor(
      * phone photo never lands in memory at full size — decoding one of those directly
      * is ~190MB and an immediate OOM on a mid-range device.
      */
+    private fun isTiff(h: ByteArray) =
+        (h[0] == 0x49.toByte() && h[1] == 0x49.toByte() && h[2] == 0x2A.toByte()) ||
+            (h[0] == 0x4D.toByte() && h[1] == 0x4D.toByte() && h[3] == 0x2A.toByte())
+
     private fun decodeScaled(uri: Uri, maxEdge: Int): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         // A bounds-only decode always returns null; only the stream itself is checked.
