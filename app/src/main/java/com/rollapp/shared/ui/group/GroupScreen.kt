@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PhotoLibrary
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SelectAll
@@ -122,6 +123,7 @@ fun GroupScreen(
     val haptics = LocalHapticFeedback.current
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var showDevelop by remember { mutableStateOf(false) }
+    var showCalendar by remember { mutableStateOf(false) }
     val recordMoment = com.rollapp.shared.ui.moments.rememberMomentRecorder()
     var revealing by remember { mutableStateOf(false) }
 
@@ -156,6 +158,21 @@ fun GroupScreen(
             revealing = true
         }
         wasDeveloped = now
+    }
+
+    if (showCalendar) {
+        com.rollapp.shared.ui.calendar.CalendarSheet(
+            loadPhotos = { viewModel.allPhotos() },
+            onOpenPhoto = { photo ->
+                showCalendar = false
+                onOpenPhoto(viewModel.groupId, photo.id, PhotoFilterCodec.encode(state.filter))
+            },
+            onAddToday = {
+                showCalendar = false
+                if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
+            },
+            onDismiss = { showCalendar = false }
+        )
     }
 
     if (showDevelop) {
@@ -279,6 +296,7 @@ fun GroupScreen(
                             onFilter = viewModel::setFilter,
                             developerName = developerName,
                             onDevelop = { showDevelop = true },
+                            onOpenCalendar = { showCalendar = true },
                             onSaveRoll = {
                                 viewModel.saveWholeRoll { count ->
                                     scope.launch {
@@ -469,7 +487,8 @@ private fun GroupHeader(
     onFilter: (PhotoFilter) -> Unit,
     developerName: String?,
     onDevelop: () -> Unit,
-    onSaveRoll: () -> Unit
+    onSaveRoll: () -> Unit,
+    onOpenCalendar: () -> Unit
 ) {
     Column(modifier = Modifier.statusBarsPadding()) {
         Row(
@@ -484,6 +503,9 @@ private fun GroupHeader(
                 IconButton(onClick = onOpenSlideshow) {
                     Icon(Icons.Rounded.PlayArrow, contentDescription = "Play slideshow", tint = Ivory)
                 }
+            }
+            IconButton(onClick = onOpenCalendar) {
+                Icon(Icons.Rounded.CalendarMonth, contentDescription = "Calendar", tint = Ivory)
             }
             IconButton(onClick = onOpenSettings) {
                 Icon(Icons.Rounded.Settings, contentDescription = "Group settings", tint = Ivory)

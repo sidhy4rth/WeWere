@@ -280,6 +280,9 @@ class GroupViewModel @Inject constructor(
         }
     }
 
+    /** Every photo in the roll, for the calendar. Empty on failure. */
+    suspend fun allPhotos(): List<Photo> = photoRepository.fetchAllPhotos(groupId).dataOrNull.orEmpty()
+
     fun dismissError() {
         transientError.value = null
     }
