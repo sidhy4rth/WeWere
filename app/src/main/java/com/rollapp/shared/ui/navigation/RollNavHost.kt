@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
@@ -61,7 +62,7 @@ private data class TabItem(val route: String, val label: String, val icon: Image
 
 private val tabs = listOf(
     TabItem(Routes.HOME, "Home", Icons.Rounded.Home),
-    TabItem(Routes.CAMERA_TAB, "Camera", Icons.Rounded.PhotoCamera),
+    TabItem(Routes.CALENDAR, "Calendar", Icons.Rounded.CalendarMonth),
     TabItem(Routes.ACTIVITY, "Activity", Icons.Rounded.Notifications),
     TabItem(Routes.PROFILE, "You", Icons.Rounded.Person)
 )
@@ -189,6 +190,12 @@ fun RollNavHost(
                 )
             }
 
+            composable(Routes.CALENDAR) {
+                com.rollapp.shared.ui.calendar.CalendarScreen(
+                    onOpenPhoto = { groupId, photoId -> navController.navigate(Routes.carousel(groupId, photoId)) },
+                    onAddToday = { navController.navigate(Routes.HOME) { popUpTo(Routes.HOME) { inclusive = true } } }
+                )
+            }
             composable(Routes.ACTIVITY) {
                 ActivityScreen(onOpenGroup = { navController.navigate(Routes.group(it)) })
             }

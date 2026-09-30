@@ -107,7 +107,7 @@ fun CalendarSheet(
 }
 
 @Composable
-private fun MonthCard(
+internal fun MonthCard(
     month: YearMonth,
     byDay: Map<LocalDate, Photo>,
     today: LocalDate,

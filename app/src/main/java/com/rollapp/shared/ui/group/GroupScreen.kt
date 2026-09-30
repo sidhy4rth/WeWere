@@ -42,7 +42,6 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PhotoLibrary
-import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SelectAll
@@ -123,7 +122,6 @@ fun GroupScreen(
     val haptics = LocalHapticFeedback.current
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var showDevelop by remember { mutableStateOf(false) }
-    var showCalendar by remember { mutableStateOf(false) }
     val recordMoment = com.rollapp.shared.ui.moments.rememberMomentRecorder()
     var revealing by remember { mutableStateOf(false) }
 
@@ -158,21 +156,6 @@ fun GroupScreen(
             revealing = true
         }
         wasDeveloped = now
-    }
-
-    if (showCalendar) {
-        com.rollapp.shared.ui.calendar.CalendarSheet(
-            loadPhotos = { viewModel.allPhotos() },
-            onOpenPhoto = { photo ->
-                showCalendar = false
-                onOpenPhoto(viewModel.groupId, photo.id, PhotoFilterCodec.encode(state.filter))
-            },
-            onAddToday = {
-                showCalendar = false
-                if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
-            },
-            onDismiss = { showCalendar = false }
-        )
     }
 
     if (showDevelop) {
@@ -296,7 +279,6 @@ fun GroupScreen(
                             onFilter = viewModel::setFilter,
                             developerName = developerName,
                             onDevelop = { showDevelop = true },
-                            onOpenCalendar = { showCalendar = true },
                             onSaveRoll = {
                                 viewModel.saveWholeRoll { count ->
                                     scope.launch {
@@ -430,38 +412,46 @@ fun GroupScreen(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
-                Row(
+                // The shutter stays dead centre with gallery and members either side;
+                // the 5-second moment sits in the right-hand corner.
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Brush.verticalGradient(0f to Color.Transparent, 0.7f to Ink))
                         .padding(top = 56.dp, bottom = 16.dp)
-                        .navigationBarsPadding(),
-                    horizontalArrangement = Arrangement.spacedBy(22.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically
+                        .navigationBarsPadding()
                 ) {
-                    RingButton(
-                        icon = Icons.Rounded.PhotoLibrary,
-                        contentDescription = "Upload from gallery",
-                        onClick = {
-                            if (rollFull) showDevelop = true
-                            else galleryPicker.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        }
-                    )
-                    Shutter(onClick = {
-                        if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
-                    })
-                    RingButton(
-                        icon = Icons.Rounded.Videocam,
-                        contentDescription = "Record a 5-second moment",
-                        onClick = recordMoment
-                    )
-                    RingButton(
-                        icon = Icons.Rounded.People,
-                        contentDescription = "Members",
-                        onClick = { onOpenMembers(viewModel.groupId) }
-                    )
+                    Row(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RingButton(
+                            icon = Icons.Rounded.PhotoLibrary,
+                            contentDescription = "Upload from gallery",
+                            onClick = {
+                                if (rollFull) showDevelop = true
+                                else galleryPicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        )
+                        Shutter(onClick = {
+                            if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
+                        })
+                        RingButton(
+                            icon = Icons.Rounded.People,
+                            contentDescription = "Members",
+                            onClick = { onOpenMembers(viewModel.groupId) }
+                        )
+                    }
+                    Box(Modifier.align(Alignment.CenterEnd).padding(end = 16.dp)) {
+                        RingButton(
+                            icon = Icons.Rounded.Videocam,
+                            contentDescription = "Record a 5-second moment",
+                            onClick = recordMoment
+                        )
+                    }
                 }
             }
         }
@@ -487,8 +477,7 @@ private fun GroupHeader(
     onFilter: (PhotoFilter) -> Unit,
     developerName: String?,
     onDevelop: () -> Unit,
-    onSaveRoll: () -> Unit,
-    onOpenCalendar: () -> Unit
+    onSaveRoll: () -> Unit
 ) {
     Column(modifier = Modifier.statusBarsPadding()) {
         Row(
@@ -503,9 +492,6 @@ private fun GroupHeader(
                 IconButton(onClick = onOpenSlideshow) {
                     Icon(Icons.Rounded.PlayArrow, contentDescription = "Play slideshow", tint = Ivory)
                 }
-            }
-            IconButton(onClick = onOpenCalendar) {
-                Icon(Icons.Rounded.CalendarMonth, contentDescription = "Calendar", tint = Ivory)
             }
             IconButton(onClick = onOpenSettings) {
                 Icon(Icons.Rounded.Settings, contentDescription = "Group settings", tint = Ivory)

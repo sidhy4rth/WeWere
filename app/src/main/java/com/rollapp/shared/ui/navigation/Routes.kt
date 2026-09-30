@@ -16,6 +16,7 @@ object Routes {
     const val CAMERA_TAB = "camera_tab"
     const val ACTIVITY = "activity"
     const val PROFILE = "profile"
+    const val CALENDAR = "calendar"
 
     const val CREATE_GROUP = "create_group"
 
