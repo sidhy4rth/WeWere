@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -60,6 +61,27 @@ import java.io.File
  * daily reminder at the time they pick. At the end of the week the clips become one
  * montage — downloading it is a Go Exclusive perk.
  */
+/** Launches the 5-second recorder and uploads the result. Used by the bottom bar. */
+@Composable
+fun rememberMomentRecorder(viewModel: MomentsViewModel = hiltViewModel()): () -> Unit {
+    val context = LocalContext.current
+    var pendingCapture by remember { mutableStateOf<Uri?>(null) }
+    val recorder = rememberLauncherForActivityResult(RecordFiveSeconds()) { ok ->
+        val uri = pendingCapture
+        if (ok && uri != null) viewModel.upload(uri)
+    }
+    return {
+        val file = File(context.cacheDir, "captures/moment-${System.currentTimeMillis()}.mp4").apply { parentFile?.mkdirs() }
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        pendingCapture = uri
+        recorder.launch(uri)
+    }
+}
+
+/**
+ * The Moments strip: icons only. One gold ring per clip this week (tap to play),
+ * then the reminder bell and the montage. Recording lives in the bottom bar.
+ */
 @Composable
 fun MomentsCard(
     group: Group,
@@ -69,90 +91,43 @@ fun MomentsCard(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var pendingCapture by remember { mutableStateOf<Uri?>(null) }
-
-    val recorder = rememberLauncherForActivityResult(RecordFiveSeconds()) { ok ->
-        val uri = pendingCapture
-        if (ok && uri != null) viewModel.upload(uri)
-    }
 
     LaunchedEffect(state.message) {
         state.message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show(); viewModel.dismissMessage() }
     }
 
-    val shape = RoundedCornerShape(16.dp)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .border(1.dp, Gold.copy(alpha = 0.25f), shape)
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Readout("Moments · this week", color = Gold)
-                Text(
-                    text = when (val n = state.moments.size) {
-                        0 -> "No moments yet — record your 5 seconds"
-                        1 -> "1 moment from the roll"
-                        else -> "$n moments from ${state.moments.map { it.uploadedBy }.distinct().size} people"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = IvoryMuted
-                )
-            }
-        }
-
-        if (state.moments.isNotEmpty()) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 state.moments.forEach { m ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { play(context, m.videoUrl) }
-                    ) {
-                        Box(
-                            Modifier.size(44.dp).clip(CircleShape).border(1.5.dp, Gold, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play ${m.uploaderName}'s moment", tint = Gold)
-                        }
-                        Text(m.uploaderName.substringBefore(" "), style = MaterialTheme.typography.labelSmall, color = Muted, maxLines = 1)
-                    }
+                    Circle(
+                        icon = Icons.Rounded.PlayArrow,
+                        contentDescription = "Play ${m.uploaderName}'s moment",
+                        filled = true
+                    ) { play(context, m.videoUrl) }
                 }
             }
-        }
-
-        if (!group.developed) {
-            Readout("Weekly montage download · Go Exclusive", color = Muted)
-        }
-
-        state.uploadProgress?.let {
-            Readout("Uploading moment…", color = Gold)
-            LinearProgressIndicator(progress = { it }, color = Gold, modifier = Modifier.fillMaxWidth())
-        }
-        state.montageStatus?.let {
-            Readout(it, color = Gold)
-            LinearProgressIndicator(color = Gold, modifier = Modifier.fillMaxWidth())
-        }
-
-        // Three equal buttons: they must fit a narrow phone side by side.
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Pill(Icons.Rounded.Videocam, "Record ${Limits.MOMENT_SECONDS}s", Modifier.weight(1f)) {
-                val file = File(context.cacheDir, "captures/moment-${System.currentTimeMillis()}.mp4").apply { parentFile?.mkdirs() }
-                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                pendingCapture = uri
-                recorder.launch(uri)
-            }
             val reminder = state.reminderMinute
-            Pill(Icons.Rounded.Alarm, reminder?.let { "%d:%02d".format(it / 60, it % 60) } ?: "Remind", Modifier.weight(1f)) {
+            Circle(
+                icon = Icons.Rounded.Alarm,
+                contentDescription = reminder?.let { "Reminder at %d:%02d".format(it / 60, it % 60) } ?: "Set a daily reminder",
+                filled = reminder != null
+            ) {
                 val start = reminder ?: (20 * 60)
                 TimePickerDialog(context, { _, h, min -> viewModel.setReminder(group.name, h * 60 + min) }, start / 60, start % 60, false).show()
             }
-            Pill(Icons.Rounded.Movie, "Montage", Modifier.weight(1f)) {
+            Circle(
+                icon = Icons.Rounded.Movie,
+                contentDescription = if (group.developed) "Make this week's montage" else "Weekly montage (Go Exclusive)",
+                filled = false
+            ) {
                 when {
                     !group.developed -> onGoExclusive()
                     state.moments.isEmpty() -> Toast.makeText(context, "No moments this week yet", Toast.LENGTH_SHORT).show()
@@ -160,22 +135,28 @@ fun MomentsCard(
                 }
             }
         }
+
+        state.uploadProgress?.let {
+            LinearProgressIndicator(progress = { it }, color = Gold, modifier = Modifier.fillMaxWidth())
+        }
+        if (state.montageStatus != null) {
+            LinearProgressIndicator(color = Gold, modifier = Modifier.fillMaxWidth())
+        }
     }
 }
 
 @Composable
-private fun Pill(icon: ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Row(
-        modifier = modifier
+private fun Circle(icon: ImageVector, contentDescription: String, filled: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
             .clip(CircleShape)
-            .border(1.dp, Gold.copy(alpha = 0.5f), CircleShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally)
+            .then(if (filled) Modifier.background(Gold.copy(alpha = 0.18f)) else Modifier)
+            .border(1.dp, Gold.copy(alpha = if (filled) 0.9f else 0.5f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = null, tint = Gold, modifier = Modifier.size(15.dp))
-        Text(label, style = MaterialTheme.typography.labelLarge, color = Ivory, maxLines = 1, softWrap = false)
+        Icon(icon, contentDescription = contentDescription, tint = Gold, modifier = Modifier.size(18.dp))
     }
 }
 

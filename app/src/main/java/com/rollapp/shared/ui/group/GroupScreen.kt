@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PhotoLibrary
+import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Settings
@@ -121,6 +122,7 @@ fun GroupScreen(
     val haptics = LocalHapticFeedback.current
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var showDevelop by remember { mutableStateOf(false) }
+    val recordMoment = com.rollapp.shared.ui.moments.rememberMomentRecorder()
     var revealing by remember { mutableStateOf(false) }
 
     val galleryPicker = rememberLauncherForActivityResult(
@@ -416,7 +418,7 @@ fun GroupScreen(
                         .background(Brush.verticalGradient(0f to Color.Transparent, 0.7f to Ink))
                         .padding(top = 56.dp, bottom = 16.dp)
                         .navigationBarsPadding(),
-                    horizontalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(22.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RingButton(
@@ -432,6 +434,11 @@ fun GroupScreen(
                     Shutter(onClick = {
                         if (rollFull) showDevelop = true else onOpenCamera(viewModel.groupId)
                     })
+                    RingButton(
+                        icon = Icons.Rounded.Videocam,
+                        contentDescription = "Record a 5-second moment",
+                        onClick = recordMoment
+                    )
                     RingButton(
                         icon = Icons.Rounded.People,
                         contentDescription = "Members",
@@ -512,7 +519,7 @@ private fun GroupHeader(
                     onSaveRoll = onSaveRoll
                 )
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
             com.rollapp.shared.ui.moments.MomentsCard(group = group, onGoExclusive = onDevelop)
         }
 
