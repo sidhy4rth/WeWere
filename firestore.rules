@@ -239,6 +239,19 @@ service cloud.firestore {
         }
       }
 
+      // ---------------------------------------------------------- moments
+
+      // 5-second clips. Members post their own; the log is otherwise read-only,
+      // and a clip can be taken down by its author or an admin.
+      match /moments/{momentId} {
+        allow read: if isMember(groupId);
+        allow create: if isMember(groupId)
+          && request.resource.data.uploadedBy == request.auth.uid;
+        allow update: if false;
+        allow delete: if isMember(groupId)
+          && (resource.data.uploadedBy == request.auth.uid || isAdmin(groupId));
+      }
+
       // --------------------------------------------------------- activity
 
       match /activity/{eventId} {

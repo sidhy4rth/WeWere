@@ -54,8 +54,8 @@ android {
         applicationId = "com.rollapp.shared"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -193,6 +193,9 @@ dependencies {
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.exifinterface)
     implementation(libs.revenuecat)
+    implementation(libs.media3.transformer)
+    implementation(libs.media3.effect)
+    implementation(libs.media3.common)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

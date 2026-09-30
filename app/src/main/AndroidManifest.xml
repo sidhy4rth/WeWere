@@ -103,6 +103,11 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
+        <!-- Daily "your 5 seconds" reminder, scheduled on the phone per roll. -->
+        <receiver
+            android:name=".data.moments.MomentReminderReceiver"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

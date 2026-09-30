@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.AllInclusive
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.HighQuality
+import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -160,6 +161,7 @@ fun DevelopSheet(
                     }
                     Perk(Icons.Rounded.HighQuality, "Near-original quality", "Up to 12 MP per photo, not 4")
                     Perk(Icons.Rounded.Download, "Save the whole roll", "Anyone in it can keep every photo, in one tap")
+                    Perk(Icons.Rounded.Movie, "Weekly montage", "Everyone's 5-second moments, cut into one video")
                     Perk(Icons.Rounded.AutoAwesome, "The Exclusive seal", "Everyone sees who made it Exclusive")
                 }
             }

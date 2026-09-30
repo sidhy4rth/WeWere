@@ -585,6 +585,14 @@ await test("a new roll can start with the 200 limit, or none (older app), but no
   await assertFails(setDoc(doc(alice(), "groups/g7"), { ...base, exposureLimit: 5000 }));
 });
 
+await test("a member can post their own moment, a stranger cannot", async () => {
+  await seedTwoMembers();
+  await assertSucceeds(setDoc(doc(bob(), `groups/${GROUP}/moments/m1`), { uploadedBy: BOB, week: "2026-W40" }));
+  await assertFails(setDoc(doc(bob(), `groups/${GROUP}/moments/m2`), { uploadedBy: ALICE, week: "2026-W40" }));
+  await assertFails(setDoc(doc(mallory(), `groups/${GROUP}/moments/m3`), { uploadedBy: MALLORY, week: "2026-W40" }));
+  await assertFails(getDoc(doc(mallory(), `groups/${GROUP}/moments/m1`)));
+});
+
 await test("redemptions are unreachable from a client", async () => {
   await seedTwoMembers();
   await assertFails(getDoc(doc(alice(), "redemptions/tx1")));

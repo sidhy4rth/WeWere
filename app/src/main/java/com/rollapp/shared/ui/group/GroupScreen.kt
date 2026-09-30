@@ -512,6 +512,8 @@ private fun GroupHeader(
                     onSaveRoll = onSaveRoll
                 )
             }
+            Spacer(Modifier.height(10.dp))
+            com.rollapp.shared.ui.moments.MomentsCard(group = group, onGoExclusive = onDevelop)
         }
 
         Spacer(Modifier.height(16.dp))

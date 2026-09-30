@@ -10,6 +10,7 @@ object FirestorePaths {
     const val INVITES = "invites"
     const val MEMBERSHIPS = "memberships"
     const val DEVICES = "devices"
+    const val MOMENTS = "moments"
 }
 
 /**
@@ -22,6 +23,9 @@ object StoragePaths {
     const val THUMBS = "thumbs"
     const val COVERS = "covers"
     const val AVATARS = "avatars"
+    const val MOMENTS = "moments"
+
+    fun moment(groupId: String, momentId: String) = "$GROUPS/$groupId/$MOMENTS/$momentId.mp4"
 
     fun photo(groupId: String, category: String, photoId: String) =
         "$GROUPS/$groupId/$category/$photoId.jpg"
@@ -66,6 +70,9 @@ object Limits {
     const val MAX_UPLOAD_ATTEMPTS = 5
     /** Android's photo picker refuses anything above 100 (MediaStore.getPickImagesMaxLimit). */
     const val MAX_GALLERY_SELECTION = 100
+
+    /** Length of a moment clip, in seconds. */
+    const val MOMENT_SECONDS = 5
 
     /** Avatars denormalised onto the group doc for the home screen card. */
     const val GROUP_CARD_AVATARS = 4
