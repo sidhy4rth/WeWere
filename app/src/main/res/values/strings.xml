@@ -6,4 +6,6 @@
     <string name="notification_channel_activity_name">Group activity</string>
     <string name="notification_channel_uploads">uploads</string>
     <string name="notification_channel_uploads_name">Uploads</string>
+    <string name="notification_channel_moments">moments</string>
+    <string name="notification_channel_moments_name">Moment reminders</string>
 </resources>

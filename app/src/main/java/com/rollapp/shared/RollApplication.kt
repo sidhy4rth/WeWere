@@ -84,6 +84,13 @@ class RollApplication : Application(), Configuration.Provider, ImageLoaderFactor
         )
         manager.createNotificationChannel(
             NotificationChannel(
+                getString(R.string.notification_channel_moments),
+                getString(R.string.notification_channel_moments_name),
+                NotificationManager.IMPORTANCE_HIGH
+            )
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
                 getString(R.string.notification_channel_uploads),
                 getString(R.string.notification_channel_uploads_name),
                 NotificationManager.IMPORTANCE_LOW

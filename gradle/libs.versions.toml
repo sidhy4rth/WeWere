@@ -27,6 +27,7 @@ accompanist = "0.36.0"
 serialization = "1.7.3"
 exifinterface = "1.3.7"
 revenuecat = "10.23.4"
+media3 = "1.6.1"
 splashscreen = "1.0.1"
 junit = "4.13.2"
 androidxJunit = "1.2.1"
@@ -95,6 +96,10 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
 # In-app purchases. 10.x is built against Kotlin 2.0.21, the same as this project.
+# Weekly montage: stitches the week's 5-second moments into one video on the phone.
+media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3" }
+media3-effect = { group = "androidx.media3", name = "media3-effect", version.ref = "media3" }
+media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
 revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 

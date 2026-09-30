@@ -26,7 +26,7 @@
 
 -- 1. The bucket. Private: reads need a token or a signed URL. ----------------------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('roll', 'roll', false, 15 * 1024 * 1024, array['image/jpeg', 'image/png', 'image/webp'])
+values ('roll', 'roll', false, 50 * 1024 * 1024, array['image/jpeg', 'image/png', 'image/webp', 'video/mp4'])
 on conflict (id) do update
   set public = excluded.public,
       file_size_limit = excluded.file_size_limit,
@@ -45,7 +45,7 @@ as $$
 $$;
 
 -- 3. Where an object is allowed to live. Mirrors StoragePaths in the app. ------------
---    groups/{groupId}/{full|thumbs|covers}/{file}   any signed-in user
+--    groups/{groupId}/{full|thumbs|covers|moments}/{file}   any signed-in user
 --    avatars/{uid}.jpg                              only that user
 create or replace function public.roll_path_allowed(object_name text)
 returns boolean
@@ -56,7 +56,7 @@ as $$
     (
       (storage.foldername(object_name))[1] = 'groups'
       and array_length(storage.foldername(object_name), 1) = 3
-      and (storage.foldername(object_name))[3] in ('full', 'thumbs', 'covers')
+      and (storage.foldername(object_name))[3] in ('full', 'thumbs', 'covers', 'moments')
     )
     or object_name = 'avatars/' || public.firebase_uid() || '.jpg';
 $$;
